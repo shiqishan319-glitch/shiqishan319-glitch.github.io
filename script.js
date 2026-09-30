@@ -26,3 +26,21 @@ addEventListener('scroll', scheduleUpdate, { passive: true });
 addEventListener('resize', scheduleUpdate);
 addEventListener('load', scheduleUpdate);
 updateNavigation();
+
+// Copy is optional: the mailto link remains usable without clipboard access.
+const copyButton = document.querySelector('.copy-email');
+const copyStatus = document.querySelector('.copy-status');
+let copyStatusTimer;
+if (copyButton && navigator.clipboard && window.isSecureContext) {
+  copyButton.hidden = false;
+  copyButton.addEventListener('click', async () => {
+    clearTimeout(copyStatusTimer);
+    try {
+      await navigator.clipboard.writeText(copyButton.dataset.email);
+      copyStatus.textContent = 'Copied!';
+    } catch {
+      copyStatus.textContent = 'Select the address to copy.';
+    }
+    copyStatusTimer = setTimeout(() => { copyStatus.textContent = ''; }, 3000);
+  });
+}
