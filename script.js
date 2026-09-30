@@ -1,22 +1,38 @@
-// Keep the section navigation in sync with the reader's position.
-// All content and anchor navigation remain available without JavaScript.
+// Progressive enhancements; content, PDF links, and details work without JS.
 const navLinks = [...document.querySelectorAll('nav a')];
 const sections = navLinks.map(link => document.querySelector(link.hash));
 const header = document.querySelector('.header-shell');
+const nav = document.querySelector('nav');
+const heroActions = document.querySelector('.hero-actions');
+const headerCV = document.querySelector('.header-cv');
 let scheduled = false;
+let previousSection = null;
 function updateNavigation() {
-  const offset = header.getBoundingClientRect().height + 70;
+  const headerHeight = header.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--header-offset', `${headerHeight + 24}px`);
   let current = null;
   for (const section of sections) {
-    if (section.getBoundingClientRect().top <= offset) current = section.id;
+    if (section.getBoundingClientRect().top <= headerHeight + 70) current = section.id;
   }
-  if (window.scrollY > 0 && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
-    current = sections[sections.length - 1].id;
-  }
+  const scrollable = document.documentElement.scrollHeight - innerHeight;
+  if (scrollY > 0 && scrollY >= scrollable - 4) current = sections.at(-1).id;
+  header.style.setProperty('--reading-progress', scrollable > 0 ? Math.min(1, Math.max(0, scrollY / scrollable)) : 0);
+  const cvVisible = heroActions.getBoundingClientRect().bottom < headerHeight;
+  headerCV.classList.toggle('is-visible', cvVisible);
+  headerCV.inert = !cvVisible;
   for (const link of navLinks) {
-    if (link.hash === `#${current}`) link.setAttribute('aria-current', 'location');
-    else link.removeAttribute('aria-current');
+    if (link.hash === `#${current}`) {
+      link.setAttribute('aria-current', 'location');
+      // Only scroll the horizontal navigation, never move the reader's page.
+      if (current !== previousSection && nav.scrollWidth > nav.clientWidth) {
+        const linkRect = link.getBoundingClientRect();
+        const navRect = nav.getBoundingClientRect();
+        if (linkRect.left < navRect.left) nav.scrollLeft -= navRect.left - linkRect.left;
+        else if (linkRect.right > navRect.right) nav.scrollLeft += linkRect.right - navRect.right;
+      }
+    } else link.removeAttribute('aria-current');
   }
+  previousSection = current;
   scheduled = false;
 }
 function scheduleUpdate() {
@@ -25,9 +41,18 @@ function scheduleUpdate() {
 addEventListener('scroll', scheduleUpdate, { passive: true });
 addEventListener('resize', scheduleUpdate);
 addEventListener('load', scheduleUpdate);
+if ('ResizeObserver' in window) new ResizeObserver(scheduleUpdate).observe(document.body);
 updateNavigation();
 
-// Copy is optional: the mailto link remains usable without clipboard access.
+// Native anchor navigation retains URL/history behavior and respects reduced motion.
+// Moving focus also makes Skip to content and section links useful to keyboard users.
+for (const link of document.querySelectorAll('a[href^="#"]')) {
+  link.addEventListener('click', event => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    document.getElementById(link.hash.slice(1))?.focus({ preventScroll: true });
+  });
+}
+
 const copyButton = document.querySelector('.copy-email');
 const copyStatus = document.querySelector('.copy-status');
 let copyStatusTimer;
@@ -37,10 +62,16 @@ if (copyButton && navigator.clipboard && window.isSecureContext) {
     clearTimeout(copyStatusTimer);
     try {
       await navigator.clipboard.writeText(copyButton.dataset.email);
-      copyStatus.textContent = 'Copied!';
+      copyStatus.textContent = 'Email copied';
+      copyButton.dataset.copied = 'true';
+      copyButton.setAttribute('aria-label', 'Email copied. Copy again');
     } catch {
       copyStatus.textContent = 'Select the address to copy.';
     }
-    copyStatusTimer = setTimeout(() => { copyStatus.textContent = ''; }, 3000);
+    copyStatusTimer = setTimeout(() => {
+      copyStatus.textContent = '';
+      delete copyButton.dataset.copied;
+      copyButton.setAttribute('aria-label', 'Copy email address');
+    }, 3500);
   });
 }

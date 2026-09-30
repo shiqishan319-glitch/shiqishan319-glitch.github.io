@@ -8,3 +8,36 @@
 @media(max-width:360px){nav{gap:14px}.school-identity{gap:8px}.school-top .date{max-width:122px;font-size:10px}.school-identity .organization-logo{width:40px;height:40px;flex-basis:40px}.school-identity .organization-logo img{width:34px;height:34px}.hero{padding:25px 18px}.hero-contact{font-size:10px}.hero-actions{gap:8px 14px}h1{font-size:43px}h2{font-size:23px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
 @media print{html{scroll-behavior:auto}body{background:white;font-size:10pt}.wrap{max-width:none;padding:0}.header-shell,.hero-note,.hero-actions,.hero-contact,footer,.skip,.project-details{display:none}.hero{display:block;background:none;padding:0;margin:0 0 20px}h1{font-size:26pt}.hero-intro{font-size:10pt}.resume-section{margin-bottom:20px}.education-grid{gap:12px}.education-card,.summary-grid{background:white}.bullet-list li.has-label{display:block}.bullet-label{margin-bottom:3px}.bullet-list li,.intro,.summary-item p,.courses{font-size:10pt;line-height:1.55}.entry-header,.project-heading,.section-heading{break-after:avoid}.bullet-list li,.education-card,.summary-item{break-inside:avoid}.section-number{background:none}.evidence{color:inherit}}
+
+/* Small reading and navigation conveniences. */
+html{scroll-padding-top:var(--header-offset,120px)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+[tabindex="-1"]:focus{outline:none}
+.header-identity{display:flex;align-items:center;gap:16px}
+.header-cv{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:4px 10px;font-size:11px;background:#e8eee4;border-radius:6px;opacity:0;visibility:hidden;transition:opacity .16s ease,background .16s ease}
+.header-cv.is-visible{opacity:1;visibility:visible}
+.header-cv .icon{width:14px;height:14px;flex-basis:14px}
+.header-cv:hover{background:#dce6d8;text-decoration:none}
+.reading-progress{position:absolute;bottom:-1px;left:0;width:100%;height:2px;pointer-events:none;transform:scaleX(var(--reading-progress,0));transform-origin:left;background:linear-gradient(90deg,#729c7c,#aa97c4)}
+.cv-preview{color:var(--muted);text-decoration:underline;text-underline-offset:4px;min-height:44px}
+.cv-preview .icon{width:14px;height:14px;flex-basis:14px}
+.hero-actions a,.hero-contact>a{min-height:44px}
+.hero-contact{position:relative;padding-bottom:18px;align-items:center;flex-wrap:nowrap}
+.hero-contact>a{min-width:0;overflow-wrap:anywhere}
+.copy-email{min-width:44px;min-height:44px;flex-shrink:0}
+.copy-email[data-copied]{background:#dce6d8;color:#284d38}
+.copy-status{position:absolute;left:0;bottom:-2px;line-height:18px}
+.project-details summary{min-height:44px;max-width:100%;padding:8px 0;border-radius:4px;text-underline-offset:4px}
+.project-details summary:hover{text-decoration:underline}
+.expand-icon{flex:0 0 19px}
+.project-title-row{display:flex;align-items:center;gap:8px;min-width:0}
+.project-title-row h3,.project-title-row h4{min-width:0;text-wrap:pretty}
+.permalink{display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;min-height:36px;border-radius:6px;color:var(--muted);opacity:.45;transition:opacity .16s ease,background .16s ease}
+.permalink .icon{width:15px;height:15px;flex-basis:15px}
+.project-title-row:hover .permalink,.permalink:focus-visible{opacity:1}
+.permalink:hover{background:#dfe6df}
+footer a{min-height:44px}
+@media(max-width:900px){.header-identity{gap:9px}nav{gap:19px}}
+@media(max-width:640px){.header-identity{justify-content:space-between;min-height:44px}.header-cv{min-width:60px;min-height:44px}nav{margin-top:3px;gap:13px}nav a{display:inline-flex;align-items:center;min-height:44px;padding:6px 3px}nav a::after{bottom:2px}.hero-actions{gap:6px 16px}.hero-contact{gap:3px}.permalink{flex-basis:44px;min-height:44px;opacity:.7}.project-title-row{gap:4px}.section-heading h2{text-wrap:balance}}
+@media(prefers-reduced-motion:reduce){.header-cv,.permalink{transition:none}}
+@media print{.header-cv,.reading-progress,.permalink{display:none}}

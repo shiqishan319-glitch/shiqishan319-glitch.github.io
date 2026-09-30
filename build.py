@@ -13,6 +13,7 @@ ICON_PATHS = {
     'profile': '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
     'mail': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/>',
     'external': '<path d="M7 17 17 7M7 7h10v10"/>',
+    'link': '<path d="m10 13 4-4m-6 6-1 1a3.5 3.5 0 0 1-5-5l4-4a3.5 3.5 0 0 1 5 0m2 2 1-1a3.5 3.5 0 0 1 5 5l-4 4a3.5 3.5 0 0 1-5 0"/>',
     'download': '<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>',
     'copy': '<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
     'linkedin': '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 10v7m5 0v-7m0 3a3 3 0 0 1 6 0v4"/><path d="M7 7h.01"/>',
@@ -41,10 +42,13 @@ def details(item):
 linkedin=''
 if c.get('linkedin'):
     assert c['linkedin'].startswith('https://www.linkedin.com/in/'), 'Use the full LinkedIn profile URL'
-    linkedin=f'<a class="action-link" href="{e(c["linkedin"])}" target="_blank" rel="noopener noreferrer">{icon("linkedin")}LinkedIn{icon("external")}</a>'
+    linkedin=f'<a class="action-link" href="{e(c["linkedin"])}" target="_blank" rel="noopener noreferrer">{icon("linkedin")}LinkedIn{icon("external")}<span class="sr-only"> (opens in a new tab)</span></a>'
 
 def bullets(items):
     return '<ul class="bullet-list">'+''.join('<li'+(' class="has-label"' if title else '')+'>'+(f'<strong class="bullet-label">{e(title)}</strong>' if title else '')+'<p>'+format_body(body)+'</p></li>' for title,body in items)+'</ul>' 
+def permalink(anchor,title):
+    return f'<a class="permalink" href="#{anchor}" aria-label="Link to {e(title)}" title="Link to this project">{icon("link")}</a>'
+
 def heading(name,title):
     return f'<div class="section-heading"><span class="section-number">{icon(name)}</span><h2>{title}</h2><span class="heading-line"></span></div>'
 education=''
@@ -54,21 +58,25 @@ experience=''
 for x in c['experience']:
     parts=''
     for i,p in enumerate(x.get('projects',[]),1):
-        parts+=f'''<section class="work-project"><div class="project-heading"><span class="project-number">PROJECT {i:02}</span><h4>{e(p['title'])}</h4><p>{e(p['subtitle'])}</p></div><p class="intro">{e(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
+        anchor=['agent-teams','overseas-product'][i-1]
+        parts+=f'''<section class="work-project" id="{anchor}" tabindex="-1"><div class="project-heading"><span class="project-number">PROJECT {i:02}</span><div class="project-title-row"><h4>{e(p['title'])}</h4>{permalink(anchor,p['title'])}</div><p>{e(p['subtitle'])}</p></div><p class="intro">{e(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
     if 'intro' in x:parts+=f'<p class="intro">{e(x["intro"])}</p>'
     if 'bullets' in x:parts+=bullets(x['bullets'])
     experience+=f'''<article class="experience-entry"><header class="entry-header"><div class="organization">{logo(LOGOS[x['company']])}<div class="organization-copy"><h3>{e(x['company'])}</h3><p class="entry-role">{e(x['role'])}</p></div></div><span class="date">{e(x['date'])}</span></header>{parts}</article>'''
-projects=''.join(f'''<article class="standalone-project"><header class="entry-header"><h3>{e(p['title'])}</h3><span class="project-label">{e(p['label'])}</span></header>{bullets(p['bullets'])}{details(p)}</article>''' for p in c['projects'])
+projects=''
+for anchor,p in zip(['creator-assistant','china-open','competition-awards'],c['projects']):
+    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{e(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{e(p['label'])}</span></header>{bullets(p['bullets'])}{details(p)}</article>'''
+
 summary=''.join(f'<article class="summary-item"><h3>{e(t)}</h3><p>{format_body(b)}</p></article>' for t,b in c['summary'])
 html=f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(c['name'])} · AI Product</title>
 <meta name="description" content="Qishan Shi: AI product experience at Qwen and Xiaohongshu, social anthropology at LSE, and creator projects."><meta name="theme-color" content="#faf9f6"><meta property="og:title" content="Qishan Shi · AI Product"><meta property="og:description" content="Agent evaluation, creator products, and cross-cultural research."><meta property="og:type" content="website"><meta property="og:url" content="https://shiqishan319-glitch.github.io/"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css"><script src="script.js" defer></script></head>
-<body><a class="skip" href="#education">Skip to content</a><div class="header-shell"><header class="site-header wrap"><a class="brand" href="#home"><span class="brand-dot"></span>{e(c['name'])}</a><nav aria-label="Main navigation"><a href="#education">Education</a><a href="#experience">Experience</a><a href="#projects">Projects & awards</a><a href="#summary">Profile</a></nav></header></div>
-<main class="wrap"><section class="hero" id="home"><div class="hero-copy"><p class="eyebrow">{e(c['role'])}</p><h1>{e(c['name'])}</h1><p class="hero-intro">{e(c['intro'])}</p><div class="hero-actions"><a class="cv-button" href="{e(c['cv'])}" download="Qishan-Shi-CV.pdf">{icon('download')}Download CV<span class="file-language">中文 PDF</span></a>{linkedin}<a class="action-link" href="https://github.com/shiqishan319-glitch" target="_blank" rel="noopener noreferrer">{icon('github')}GitHub{icon('external')}</a></div><div class="hero-contact"><a href="mailto:{e(c['email'])}">{icon('mail')}{e(c['email'])}</a><button class="copy-email" type="button" data-email="{e(c['email'])}" aria-label="Copy email address" hidden>{icon('copy')}</button><span class="copy-status" role="status" aria-live="polite"></span></div></div><div class="hero-note"><span>FOCUS</span><p>Agent evaluation<br>Creator workflows<br>Cross-cultural research</p></div></section>
-<section class="resume-section" id="education">{heading('education','Education')}<div class="education-grid">{education}</div></section>
-<section class="resume-section" id="experience">{heading('experience','Internship experience')}<div class="experience-list">{experience}</div></section>
-<section class="resume-section" id="projects">{heading('projects','Projects & awards')}{projects}</section>
-<section class="resume-section" id="summary">{heading('profile','Personal profile')}<div class="summary-grid">{summary}</div></section></main>
+<body><a class="skip" href="#education">Skip to content</a><div class="header-shell"><header class="site-header wrap"><div class="header-identity"><a class="brand" href="#home"><span class="brand-dot"></span>{e(c['name'])}</a><a class="header-cv" href="{e(c['cv'])}" download="Qishan-Shi-CV.pdf" aria-label="Download CV (Chinese PDF)" title="Download CV · Chinese PDF" inert>{icon('download')}CV</a></div><nav aria-label="Main navigation"><a href="#education">Education</a><a href="#experience">Experience</a><a href="#projects">Projects & awards</a><a href="#summary">Profile</a></nav></header><div class="reading-progress" aria-hidden="true"></div></div>
+<main class="wrap"><section class="hero" id="home" tabindex="-1"><div class="hero-copy"><p class="eyebrow">{e(c['role'])}</p><h1>{e(c['name'])}</h1><p class="hero-intro">{e(c['intro'])}</p><div class="hero-actions"><a class="cv-button" href="{e(c['cv'])}" download="Qishan-Shi-CV.pdf">{icon('download')}Download CV<span class="file-language">中文 PDF</span></a><a class="cv-preview" href="{e(c['cv'])}" target="_blank" rel="noopener noreferrer" aria-label="Preview CV (Chinese PDF, opens in a new tab)">Preview{icon('external')}</a>{linkedin}<a class="action-link" href="https://github.com/shiqishan319-glitch" target="_blank" rel="noopener noreferrer">{icon('github')}GitHub{icon('external')}<span class="sr-only"> (opens in a new tab)</span></a></div><div class="hero-contact"><a href="mailto:{e(c['email'])}">{icon('mail')}{e(c['email'])}</a><button class="copy-email" type="button" data-email="{e(c['email'])}" aria-label="Copy email address" title="Copy email address" hidden>{icon('copy')}</button><span class="copy-status" role="status" aria-live="polite"></span></div></div><div class="hero-note"><span>FOCUS</span><p>Agent evaluation<br>Creator workflows<br>Cross-cultural research</p></div></section>
+<section class="resume-section" id="education" tabindex="-1">{heading('education','Education')}<div class="education-grid">{education}</div></section>
+<section class="resume-section" id="experience" tabindex="-1">{heading('experience','Internship experience')}<div class="experience-list">{experience}</div></section>
+<section class="resume-section" id="projects" tabindex="-1">{heading('projects','Projects & awards')}{projects}</section>
+<section class="resume-section" id="summary" tabindex="-1">{heading('profile','Personal profile')}<div class="summary-grid">{summary}</div></section></main>
 <footer class="wrap"><a class="footer-email" href="mailto:{e(c['email'])}">{icon('mail')}Email Qishan</a><span>© 2026 {e(c['name'])}</span><a href="#home">{icon('up')}Back to top</a></footer></body></html>'''
 (root/'index.html').write_text(html)
 print('Built resume-layout website: 2 education entries, 3 internships, 3 projects/awards entries, 4 profile points.')
