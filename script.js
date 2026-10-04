@@ -32,6 +32,13 @@ function updateNavigation() {
       }
     } else link.removeAttribute('aria-current');
   }
+  const activeLink = navLinks.find(link => link.hash === `#${current}`);
+  nav.classList.add('with-indicator');
+  nav.style.setProperty('--nav-visible', activeLink ? '1' : '0');
+  if (activeLink) {
+    nav.style.setProperty('--nav-left', `${activeLink.offsetLeft}px`);
+    nav.style.setProperty('--nav-width', `${activeLink.offsetWidth}px`);
+  }
   previousSection = current;
   scheduled = false;
 }
@@ -73,5 +80,49 @@ if (copyButton && navigator.clipboard && window.isSecureContext) {
       delete copyButton.dataset.copied;
       copyButton.setAttribute('aria-label', 'Copy email address');
     }, 3500);
+  });
+}
+
+// A local, opt-in greeting. No idle loop, sound, tracking, or stored state.
+const sheepButton = document.querySelector('.sheep-button');
+if (sheepButton) {
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const caption = sheepButton.querySelector('.sheep-caption');
+  const status = document.querySelector('.sheep-status');
+  const greetings = ['Baa, hello!', 'Stay curious.', 'Hi again, ewe.'];
+  let greetingIndex = 0;
+  let greetingTimer;
+  let sheepAnimations = [];
+  const stopSheepMotion = () => {
+    sheepAnimations.forEach(animation => animation.cancel());
+    sheepAnimations = [];
+  };
+  reducedMotion.addEventListener('change', () => { if (reducedMotion.matches) stopSheepMotion(); });
+  sheepButton.hidden = false;
+  sheepButton.addEventListener('click', () => {
+    clearTimeout(greetingTimer);
+    stopSheepMotion();
+    const greeting = greetings[greetingIndex++ % greetings.length];
+    caption.textContent = greeting;
+    status.textContent = greeting;
+    sheepButton.dataset.greeting = 'true';
+    if (!reducedMotion.matches) {
+      sheepAnimations = [
+        sheepButton.querySelector('.sheep-head').animate([
+          {transform:'rotate(0deg)'}, {transform:'rotate(-12deg)',offset:.35},
+          {transform:'rotate(4deg)',offset:.7}, {transform:'rotate(0deg)'}
+        ], {duration:750,easing:'ease-in-out'}),
+        sheepButton.querySelector('.sheep-eyes').animate([
+          {transform:'scaleY(1)'}, {transform:'scaleY(.1)',offset:.45},
+          {transform:'scaleY(1)',offset:.6}, {transform:'scaleY(1)'}
+        ], {duration:750,easing:'ease-in-out'})
+      ];
+    }
+    greetingTimer = setTimeout(() => {
+      caption.textContent = 'Say hello';
+      status.textContent = '';
+      delete sheepButton.dataset.greeting;
+      stopSheepMotion();
+    }, 3200);
   });
 }

@@ -21,3 +21,7 @@ Run `python3 -m http.server 8765` in this folder and visit http://localhost:8765
 ## GitHub Pages
 
 Repository: `shiqishan319-glitch.github.io`. In Settings → Pages, choose **Deploy from a branch**, **main**, **/ (root)**. Include `.nojekyll` in the root.
+
+## Personal details
+
+The clickable sheep is drawn in `assets/sheep.svg` and embedded by the build. Greeting text lives in `script.js`. It animates only on activation, resets after a few seconds, and respects reduced-motion preferences. Button feedback, selection colors, navigation indicators, and progressive disclosure transitions are in `style.css`. No external libraries or tracking are used.
