@@ -24,4 +24,4 @@ Repository: `shiqishan319-glitch.github.io`. In Settings → Pages, choose **Dep
 
 ## Personal details
 
-The clickable sheep is drawn in `assets/sheep.svg` and embedded by the build. Greeting text lives in `script.js`. It animates only on activation, resets after a few seconds, and respects reduced-motion preferences. Button feedback, selection colors, navigation indicators, and progressive disclosure transitions are in `style.css`. No external libraries or tracking are used.
+The clickable sheep is drawn in `assets/sheep.svg` and embedded by the build. Greeting text lives in `script.js`. It looks toward nearby mouse movement, responds to clicks or keyboard activation with scripted speech and small reactions, and dozes after inactivity. Timers and animations pause offscreen or when the page is hidden. Touch input has the same click reactions; reduced-motion preferences disable movement. Button feedback, selection colors, navigation indicators, and progressive disclosure transitions are in `style.css`. No external libraries or tracking are used.

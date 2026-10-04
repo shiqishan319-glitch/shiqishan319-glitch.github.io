@@ -83,46 +83,147 @@ if (copyButton && navigator.clipboard && window.isSecureContext) {
   });
 }
 
-// A local, opt-in greeting. No idle loop, sound, tracking, or stored state.
+// A tiny local mascot: pointer-aware eyes, short greetings and opt-in reactions.
+// No messages leave the browser. All behavior pauses when hidden or offscreen.
 const sheepButton = document.querySelector('.sheep-button');
 if (sheepButton) {
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+  const hero = document.querySelector('.hero');
+  const bubble = sheepButton.querySelector('.sheep-bubble');
   const caption = sheepButton.querySelector('.sheep-caption');
   const status = document.querySelector('.sheep-status');
-  const greetings = ['Baa, hello!', 'Stay curious.', 'Hi again, ewe.'];
-  let greetingIndex = 0;
-  let greetingTimer;
-  let sheepAnimations = [];
-  const stopSheepMotion = () => {
-    sheepAnimations.forEach(animation => animation.cancel());
-    sheepAnimations = [];
-  };
-  reducedMotion.addEventListener('change', () => { if (reducedMotion.matches) stopSheepMotion(); });
+  const eyes = sheepButton.querySelector('.sheep-eyes');
+  const greetings = [
+    ['Baa, hello! I’m the little sheep here.', 'hello'],
+    ['That counts as a head pat. Thank ewe.', 'love'],
+    ['Big ideas. Very small hooves.', 'hop'],
+    ['Just here to keep ewe company.', 'love'],
+    ['I supervise the daydreaming.', 'hello'],
+    ['One tiny hop for a sheep…', 'hop'],
+    ['Soft wool. Strong opinions on grass.', 'hello'],
+    ['Ewe have excellent clicking skills.', 'love']
+  ];
+  let visible = true, engaged = false, frame = 0, point = null;
+  let messageTimer, restTimer, blinkTimer, reactionTimer;
+  let greetingIndex = 0, lastClick = 0, lastWelcome = 0;
+  let animations = [];
+  function stopAnimations() {
+    animations.forEach(animation => animation.cancel());
+    animations = [];
+  }
+  function animate(element, keyframes, options) {
+    if (!motion.matches && visible && !document.hidden) {
+      const animation = element.animate(keyframes, options);
+      animations.push(animation);
+      animation.onfinish = () => { animations = animations.filter(item => item !== animation); };
+    }
+  }
+  function neutralGaze() {
+    sheepButton.style.setProperty('--gaze-x', '0px');
+    sheepButton.style.setProperty('--gaze-y', '0px');
+    sheepButton.style.setProperty('--head-turn', '0deg');
+  }
+  function quiet() {
+    clearTimeout(messageTimer); clearTimeout(restTimer); clearTimeout(blinkTimer); clearTimeout(reactionTimer);
+    cancelAnimationFrame(frame); frame = 0; point = null;
+    stopAnimations(); neutralGaze();
+    delete sheepButton.dataset.talking; delete sheepButton.dataset.mood; delete sheepButton.dataset.sleeping;
+    status.textContent = ''; caption.textContent = 'Say hello';
+  }
+  function scheduleBlink() {
+    clearTimeout(blinkTimer);
+    if (motion.matches || !engaged || !visible || document.hidden || sheepButton.dataset.sleeping) return;
+    blinkTimer = setTimeout(() => {
+      if (!sheepButton.dataset.mood) animate(eyes, [
+        {transform:'scaleY(1)'}, {transform:'scaleY(.08)',offset:.45}, {transform:'scaleY(1)'}
+      ], {duration:180,easing:'ease-in-out'});
+      scheduleBlink();
+    }, 4500 + Math.random() * 2500);
+  }
+  function wake() {
+    engaged = true;
+    clearTimeout(restTimer);
+    delete sheepButton.dataset.sleeping;
+    caption.textContent = 'Say hello';
+    restTimer = setTimeout(() => {
+      if (!visible || document.hidden || motion.matches) return;
+      clearTimeout(blinkTimer); stopAnimations(); neutralGaze();
+      sheepButton.dataset.sleeping = 'true'; caption.textContent = 'Daydreaming…';
+    }, 16000);
+  }
+  function speak(text, announce = false) {
+    clearTimeout(messageTimer);
+    bubble.textContent = text;
+    sheepButton.dataset.talking = 'true';
+    if (announce) status.textContent = text;
+    messageTimer = setTimeout(() => {
+      delete sheepButton.dataset.talking; status.textContent = '';
+    }, 4200);
+  }
+  function react(mood) {
+    clearTimeout(reactionTimer); stopAnimations();
+    sheepButton.dataset.mood = mood;
+    animate(sheepButton.querySelector('.sheep-head'), [
+      {transform:'rotate(0deg)'}, {transform:'rotate(-11deg)',offset:.35},
+      {transform:'rotate(4deg)',offset:.7}, {transform:'rotate(0deg)'}
+    ], {duration:650,easing:'ease-in-out'});
+    if (mood === 'hop') animate(sheepButton.querySelector('.sheep-body'), [
+      {transform:'translateY(0) scaleY(1)'}, {transform:'translateY(2px) scaleY(.95)',offset:.15},
+      {transform:'translateY(-9px) scaleY(1.02)',offset:.45}, {transform:'translateY(0) scaleY(1)'}
+    ], {duration:600,easing:'ease-in-out'});
+    if (mood === 'love') animate(sheepButton.querySelector('.sheep-heart'), [
+      {opacity:0,transform:'translateY(7px) scale(.6)'},
+      {opacity:1,transform:'translateY(0) scale(1)',offset:.35},
+      {opacity:0,transform:'translateY(-6px) scale(1.05)'}
+    ], {duration:1000,easing:'ease-out'});
+    reactionTimer = setTimeout(() => { delete sheepButton.dataset.mood; }, 1500);
+    scheduleBlink();
+  }
   sheepButton.hidden = false;
   sheepButton.addEventListener('click', () => {
-    clearTimeout(greetingTimer);
-    stopSheepMotion();
-    const greeting = greetings[greetingIndex++ % greetings.length];
-    caption.textContent = greeting;
-    status.textContent = greeting;
-    sheepButton.dataset.greeting = 'true';
-    if (!reducedMotion.matches) {
-      sheepAnimations = [
-        sheepButton.querySelector('.sheep-head').animate([
-          {transform:'rotate(0deg)'}, {transform:'rotate(-12deg)',offset:.35},
-          {transform:'rotate(4deg)',offset:.7}, {transform:'rotate(0deg)'}
-        ], {duration:750,easing:'ease-in-out'}),
-        sheepButton.querySelector('.sheep-eyes').animate([
-          {transform:'scaleY(1)'}, {transform:'scaleY(.1)',offset:.45},
-          {transform:'scaleY(1)',offset:.6}, {transform:'scaleY(1)'}
-        ], {duration:750,easing:'ease-in-out'})
-      ];
-    }
-    greetingTimer = setTimeout(() => {
-      caption.textContent = 'Say hello';
-      status.textContent = '';
-      delete sheepButton.dataset.greeting;
-      stopSheepMotion();
-    }, 3200);
+    wake();
+    const now = Date.now();
+    const quickPat = now - lastClick < 550;
+    lastClick = now;
+    const [text, mood] = quickPat ? ['So many head pats. Baa-liss.', 'love'] : greetings[greetingIndex++ % greetings.length];
+    speak(text, true); react(mood);
   });
+  sheepButton.addEventListener('pointerenter', event => {
+    if (event.pointerType !== 'mouse' || !finePointer.matches) return;
+    wake(); scheduleBlink();
+    if (!sheepButton.dataset.talking && Date.now() - lastWelcome > 15000) {
+      lastWelcome = Date.now(); speak('Oh! A visitor. Hello, ewe.');
+    }
+  });
+  sheepButton.addEventListener('focus', () => { wake(); });
+  hero.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'mouse' || !finePointer.matches || motion.matches || !visible || document.hidden) return;
+    point = {x:event.clientX, y:event.clientY};
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      const rect = sheepButton.getBoundingClientRect();
+      const dx = point.x - (rect.left + rect.width * .72);
+      const dy = point.y - (rect.top + rect.height * .36);
+      const distance = Math.hypot(dx, dy);
+      if (distance > 550) { neutralGaze(); return; }
+      wake();
+      const clamp = (value, limit) => Math.max(-limit, Math.min(limit, value));
+      sheepButton.style.setProperty('--gaze-x', `${clamp(dx / 85, 1.5).toFixed(2)}px`);
+      sheepButton.style.setProperty('--gaze-y', `${clamp(dy / 100, 1.4).toFixed(2)}px`);
+      sheepButton.style.setProperty('--head-turn', `${clamp(dx / 45, 7).toFixed(2)}deg`);
+    });
+  }, {passive:true});
+  hero.addEventListener('pointerleave', neutralGaze);
+  document.documentElement.addEventListener('pointerleave', neutralGaze);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) quiet(); });
+  addEventListener('pagehide', quiet);
+  addEventListener('blur', quiet);
+  motion.addEventListener('change', quiet);
+  finePointer.addEventListener('change', neutralGaze);
+  if ('IntersectionObserver' in window) new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (!visible) quiet();
+  }).observe(sheepButton);
 }

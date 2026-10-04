@@ -73,7 +73,7 @@ for anchor,p in zip(['creator-assistant','china-open','competition-awards'],c['p
     projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{e(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{e(p['label'])}</span></header>{workflow}{bullets(p['bullets'])}{details(p)}</article>'''
 
 sheep_svg=(root/'assets/sheep.svg').read_text().replace('<svg ', '<svg aria-hidden="true" focusable="false" ', 1)
-sheep=f'<button class="sheep-button" type="button" aria-label="Say hello to the little sheep" hidden>{sheep_svg}<span class="sheep-caption" aria-hidden="true">Say hello</span></button><span class="sr-only sheep-status" role="status" aria-live="polite"></span>'
+sheep=f'<button class="sheep-button" type="button" aria-label="Say hello to the little sheep" hidden><span class="sheep-bubble" aria-hidden="true"></span>{sheep_svg}<span class="sheep-caption" aria-hidden="true">Say hello</span></button><span class="sr-only sheep-status" role="status" aria-live="polite"></span>'
 summary=''.join(f'<article class="summary-item"><h3>{e(t)}</h3><p>{format_body(b)}</p></article>' for t,b in c['summary'])
 css_version=hashlib.sha256((root/'style.css').read_bytes()).hexdigest()[:10]
 js_version=hashlib.sha256((root/'script.js').read_bytes()).hexdigest()[:10]
