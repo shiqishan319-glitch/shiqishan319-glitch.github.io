@@ -155,3 +155,9 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 @keyframes grass-sprout{from{transform:scale(.35,.05);opacity:0}to{transform:scale(1);opacity:1}}
 @media(prefers-reduced-motion:reduce){.meadow-grass{display:none}}
 @media print{.meadow-grass{display:none}}
+
+/* A deliberately rare, tiny pellet-shaped easter egg; no hit target or announcement. */
+.sheep-dropping{position:fixed;left:var(--dropping-x);top:var(--dropping-y);width:20px;height:15px;transform:translate(-50%,-50%);pointer-events:none;z-index:7;animation:dropping-fade 7s ease-out forwards}
+.sheep-dropping[hidden]{display:none}.sheep-dropping svg{display:block;width:100%;height:100%}
+@keyframes dropping-fade{0%{opacity:0}8%,70%{opacity:1}100%{opacity:0}}
+@media print,(prefers-reduced-motion:reduce){.sheep-dropping{display:none}}

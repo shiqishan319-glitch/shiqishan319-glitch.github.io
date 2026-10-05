@@ -31,3 +31,5 @@ The sheep has no enclosing panel. `sheep-roam.js` moves it through open viewport
 Interactions use no network requests, audio, or persistent visitor storage. Hidden/offscreen cleanup cancels timers, captures, and animation; reduced-motion settings preserve text/state feedback without movement. Keep SVG part class names when swapping in a selected new character.
 
 Build after edits with `python3 build.py` so CSS/JS URL hashes update. Check behavior with `node --test tests/*.test.cjs`; these deterministic checks cover gaze continuity, eyelid closure, action interruption, gesture thresholds, timer transitions, cancellation, feeding, reduced motion, project detection, note pacing, manual replay, and the automatic-note toggle. Also check native controls and layout in a browser at desktop/mobile widths.
+
+After a completed grass meal, a silent 1% easter egg may leave three tiny stylized pellets behind the sheep. It happens at most once per page visit, fades out within seven seconds, and clears on scroll, resize, hiding the page, or a motion-preference change. Cancelled meals never trigger it.

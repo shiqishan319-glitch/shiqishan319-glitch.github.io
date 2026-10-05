@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 function setup(reduced = false, withGuide = false, withGrass = false) {
+  let randomValue=0;
   let time = 100000, sequence = 0, animationCount = 0, observer;
   const jobs = new Map(), elements = new Map();
   class Element {
@@ -52,6 +53,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
     stop(){clearTimeoutMock(this.trip);if(this.moving){this.moving=false;this.options.rest();}}
     place(x,y){this.x=x;this.y=y;calls.push(['place',x,y]);}
     approach(x,y){calls.push(['approach',x,y]);return true;}
+    bounds(){return {width:82,height:92};}
     forageSpot(){return withGrass?{x:200,y:300,grassX:220,grassY:370}:null;}
     clearRoute(){return true;}
     moveTo(x,y,arrive){this.stop();this.moving=true;calls.push(['grass-trip',x,y]);this.options.walk();this.trip=timeout(()=>{this.stop();arrive();},3000);}
@@ -59,7 +61,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
   };
 
   const clearTimeoutMock=id=>jobs.delete(id);
-  const ctx={Math:Object.assign(Object.create(Math),{random:()=>0}),innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
+  const ctx={Math:Object.assign(Object.create(Math),{random:()=>randomValue}),innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
     setTimeout:timeout,clearTimeout:id=>jobs.delete(id),requestAnimationFrame:fn=>timeout(fn,0),cancelAnimationFrame:id=>jobs.delete(id),
     addEventListener:window.addEventListener.bind(window),IntersectionObserver:class{constructor(fn){observer=fn;}observe(){}},console};
   ctx.window=window; window.IntersectionObserver=ctx.IntersectionObserver;
@@ -72,7 +74,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
     get('#beta').rect=id==='beta'?{top:100,bottom:650}:{top:900,bottom:1300};
     window.emit('scroll');tick(0);
   }
-  return {calls,project,get,b,doc,window,motion,tick,jobs,actions,state:()=>b.dataset.state,
+  return {random:v=>randomValue=v,calls,project,get,b,doc,window,motion,tick,jobs,actions,state:()=>b.dataset.state,
     say:()=>get('.sheep-status').textContent,animations:()=>animationCount,
     hidden:()=>{doc.hidden=true;doc.emit('visibilitychange');},offscreen:()=>observer([{isIntersecting:false}]),
     click:()=>b.emit('click',{detail:0}),
@@ -203,4 +205,22 @@ test('scrolling removes stale grass and cancels an unfinished trip',()=>{
 test('hidden tabs and reduced motion do not leave active grass behind',()=>{
  const s=setup(false,false,true);s.tick(9000);s.hidden();assert.equal(s.get('.meadow-grass').hidden,true);assert.equal(s.jobs.size,0);
  const r=setup(true,false,true);r.tick(15000);assert.ok(!r.calls.some(c=>c[0]==='grass-trip'));
+});
+
+test('rare dropping appears only after a finished meal and cleans itself up',()=>{
+ const s=setup(false,false,true);s.tick(13400);s.random(.009);s.tick(2820);assert.equal(s.get('.sheep-dropping').hidden,false);assert.equal(s.say(),'');s.tick(7000);assert.equal(s.get('.sheep-dropping').hidden,true);
+});
+test('the one percent cutoff excludes normal meals',()=>{
+ const s=setup(false,false,true);s.tick(13400);s.random(.01);s.tick(2820);assert.notEqual(s.get('.sheep-dropping').hidden,false);
+});
+test('cancelled meals never roll the rare easter egg',()=>{
+ const s=setup(false,false,true);s.tick(13400);s.random(0);s.click();s.tick(4000);assert.notEqual(s.get('.sheep-dropping').hidden,false);
+});
+test('scrolling cleans a rare dropping immediately',()=>{
+ const s=setup(false,false,true);s.tick(16220);assert.equal(s.get('.sheep-dropping').hidden,false);s.window.emit('scroll');assert.equal(s.get('.sheep-dropping').hidden,true);
+});
+test('even repeated lucky rolls produce at most one dropping per visit',()=>{
+ const s=setup(false,false,true);const drop=s.get('.sheep-dropping');let hidden=true,appearances=0;
+ Object.defineProperty(drop,'hidden',{get:()=>hidden,set:value=>{hidden=value;if(value===false)appearances++;}});
+ s.random(0);s.tick(220000);assert.ok(s.calls.filter(c=>c[1]==='eat').length>=2);assert.equal(appearances,1);
 });

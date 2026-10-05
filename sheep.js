@@ -34,6 +34,8 @@
   let roamer = null;
   const grass = document.querySelector('.meadow-grass');
   let pasture = null, grazingTrip = false;
+  const dropping = document.querySelector('.sheep-dropping');
+  let rareDropDone = false;
   const now = () => performance.now();
   const active = () => visible && !document.hidden;
   const resting = () => ['drowsy', 'yawning', 'sleeping'].includes(state);
@@ -135,12 +137,31 @@
       snack();
     });
   }
+  function clearDropping() {
+    cancel('dropping');
+    if (dropping) dropping.hidden=true;
+  }
+  function maybeLeaveDropping() {
+    // A silent 1% surprise after a completed meal, at most once per page visit.
+    if (!dropping || rareDropDone || motion.matches || Math.random()>=.01) return;
+    rareDropDone=true;
+    const b=roamer.bounds();
+    const x=roamer.x+b.width*(root.classList.contains('faces-left') ? .78 : .22);
+    dropping.style.setProperty('--dropping-x',x+'px');
+    dropping.style.setProperty('--dropping-y',(roamer.y+b.height*.78)+'px');
+    dropping.hidden=false;
+    later('dropping',7000,clearDropping);
+  }
   function snack() {
     if (state !== 'awake') return;
     setState('feeding');
     if (pasture) later('grass-bite',1300,()=>{if(grass) grass.dataset.eaten='true';});
     // Passive reactions are visual; no unsolicited screen-reader announcement.
-    play('eat', () => {clearGrass();awake();scheduleGrass();});
+    play('eat', () => {
+      const finishedMeal=Boolean(pasture);
+      clearGrass();awake();scheduleGrass();
+      if (finishedMeal) maybeLeaveDropping();
+    });
   }
   function awake() {
     setState('awake'); play('rest'); scheduleBlink(); idleLater();scheduleGrass();
@@ -210,7 +231,7 @@
     }
   }
   function quiet() {
-    roamer?.stop(); clearGrass(); guide?.pause();
+    roamer?.stop(); clearGrass(); clearDropping(); guide?.pause();
     releasePress(true);
     timers.forEach(clearTimeout); timers.clear();
     cancelAnimationFrame(frame); frame = 0; point = null; stroke = null;
@@ -330,8 +351,8 @@
 
   });
   cancel('grow-grass');scheduleGrass(9000+Math.random()*3000);
-  addEventListener('scroll',()=>{if(pasture)clearGrass();scheduleGrass(8000);},{passive:true});
-  addEventListener('resize',()=>{if(pasture)clearGrass();scheduleGrass(8000);});
+  addEventListener('scroll',()=>{clearDropping();if(pasture)clearGrass();scheduleGrass(8000);},{passive:true});
+  addEventListener('resize',()=>{clearDropping();if(pasture)clearGrass();scheduleGrass(8000);});
   // Double-click only genuine empty space; text selection and real controls keep their meaning.
   document.addEventListener('dblclick', event => {
     const target=event.target;
