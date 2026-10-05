@@ -5,9 +5,15 @@
   if (!root) return;
   const button = root.querySelector('.sheep-button');
   const svg = button.querySelector('svg');
-  const body = button.querySelector('.sheep-body');
-  const head = button.querySelector('.sheep-head');
-  const eyes = button.querySelector('.sheep-eyes');
+  const motionData = JSON.parse(document.querySelector('#sheep-motion-data').textContent);
+  // Short transitions share the same gaze-preserving controller as the full actions.
+  for (const [name,id] of [['rest','idle'],['drowsy','drowsy'],['press','crouch']]) {
+    motionData.sequences[name] = {frames:[[id,300]]};
+  }
+  const mascot = new window.BUSheep(svg, motionData);
+  // This page owns proximity and interaction gating; avoid a second pointer listener.
+  document.removeEventListener('pointermove', mascot.pointer);
+  let actionRevision = 0;
   const bubble = button.querySelector('.sheep-bubble');
   const caption = button.querySelector('.sheep-caption');
   const status = root.querySelector('.sheep-status');
@@ -17,7 +23,6 @@
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
   const timers = new Map();
-  const animations = new Set();
   const lines = [
     'Oh, hello. Nice to meet ewe.', 'Small sheep. Big thoughts.',
     'Just here to keep ewe company.', 'Still no pockets.',
@@ -41,24 +46,23 @@
       if (active()) action();
     }, delay));
   }
-  function stopAnimations() {
-    animations.forEach(animation => animation.cancel()); animations.clear();
+  function stopAnimations() { actionRevision++; mascot.stop(); }
+  function play(name, done) {
+    if (!active()) return;
+    const revision = ++actionRevision;
+    mascot.play(name).then(() => {
+      if (revision === actionRevision && active()) done?.();
+    });
   }
-  function animate(part, frames, duration = 600) {
-    if (motion.matches || !active() || !part) return;
-    const animation = part.animate(frames, {duration, easing:'ease-in-out'});
-    animations.add(animation);
-    animation.onfinish = () => animations.delete(animation);
-  }
-  function neutralGaze() {
-    button.style.setProperty('--gaze-x', '0px');
-    button.style.setProperty('--gaze-y', '0px');
-    button.style.setProperty('--head-turn', '0deg');
+  function clearStroke() {
+    // Let the next pointer event update the target. Never snap during an action.
+    stroke = null;
   }
   function setState(next) {
     cancel('state'); cancel('blink'); cancel('idle'); cancel('reaction');
     stopAnimations(); delete button.dataset.mood;
     state = next; button.dataset.state = next;
+    mascot.follow = finePointer.matches && next === 'awake' && active();
     button.toggleAttribute('data-sleeping', next === 'sleeping');
     caption.textContent = ({sleeping:'Daydreaming…',drowsy:'Getting sleepy',yawning:'A tiny yawn',
       petting:'More head pats?',feeding:'Nom, nom',pressed:'Soft little sheep',waking:'Oh, hello again'}[next] || 'Say hello');
@@ -72,8 +76,7 @@
   function scheduleBlink() {
     if (!engaged || motion.matches || state !== 'awake' || !active() || timers.has('blink')) return;
     later('blink', 5500, () => {
-      if (state === 'awake' && !button.dataset.mood) animate(eyes,
-        [{transform:'scaleY(1)'},{transform:'scaleY(.08)',offset:.45},{transform:'scaleY(1)'}], 180);
+      if (state === 'awake' && !button.dataset.mood && !mascot.scripted) play('blink');
       scheduleBlink();
     });
   }
@@ -81,50 +84,37 @@
     cancel('idle');
     if (!engaged || state !== 'awake' || menu.open || !active()) return;
     later('idle', 12000, () => {
-      setState('drowsy'); neutralGaze();
+      setState('drowsy'); play('drowsy');
       later('state', 4000, yawnAndSleep);
     });
   }
   function awake() {
-    setState('awake'); scheduleBlink(); idleLater();
+    setState('awake'); play('rest'); scheduleBlink(); idleLater();
   }
   function engage() {
     engaged = true;
     if (state === 'awake') { idleLater(); scheduleBlink(); }
   }
   function yawnAndSleep() {
-    setState('yawning'); neutralGaze();
-    later('state', 1100, () => { setState('sleeping'); neutralGaze(); });
+    setState('yawning');
+    play('sleep', () => setState('sleeping'));
   }
-  function nod() {
-    animate(head, [{transform:'rotate(0deg)'},{transform:'rotate(-10deg)',offset:.35},
-      {transform:'rotate(3deg)',offset:.7},{transform:'rotate(0deg)'}], 650);
-  }
-  function hop() {
-    animate(body, [{transform:'translateY(0) scaleY(1)'},
-      {transform:'translateY(2px) scaleY(.94)',offset:.18},
-      {transform:'translateY(-8px) scaleY(1.02)',offset:.48},
-      {transform:'translateY(0) scaleY(1)'}], 650);
-  }
-  function happyHeart() {
-    animate(button.querySelector('.sheep-heart'), [{opacity:0,transform:'translateY(5px) scale(.6)'},
-      {opacity:1,transform:'translateY(0) scale(1)',offset:.4},
-      {opacity:0,transform:'translateY(-6px) scale(1.05)'}], 1100);
-  }
+  function nod() { play('talk', () => { if (motion.matches) play('rest'); }); }
+  function hop() { play('hop', () => { if (motion.matches) play('rest'); }); }
+  function happyHeart() { play('pat', () => { if (motion.matches) play('rest'); }); }
   function wakeGreeting() {
-    engaged = true; setState('waking'); neutralGaze();
-    speak('I was thinking. Probably.', true); nod();
-    later('state', 900, awake);
+    engaged = true; setState('waking');
+    speak('I was thinking. Probably.', true);
+    play('wake', awake);
   }
   function pet(announce = false) {
     guide?.interacted();
     if (state === 'feeding' || state === 'pressed') return;
-    engaged = true; lastPat = now(); setState('petting'); neutralGaze(); happyHeart();
-    animate(head, [{transform:'rotate(0)'},{transform:'rotate(-5deg)',offset:.5},{transform:'rotate(0)'}], 1000);
+    engaged = true; lastPat = now(); setState('petting');
     if (announce || now() - lastPatSpeech > 8000) {
       speak('That’s the spot. Thank ewe.', announce); lastPatSpeech = now();
     }
-    later('state', 1900, awake);
+    play('pat', awake);
   }
   function greet() {
     if (state === 'feeding' || state === 'waking') return;
@@ -147,10 +137,7 @@
   function bounce() {
     engaged = true; awake();
     speak('Soft wool. Springy little hooves.', true);
-    animate(body, [{transform:'translateY(3px) scale(1.07,.89)'},
-      {transform:'translateY(-5px) scale(.98,1.05)',offset:.4},
-      {transform:'translateY(1px) scale(1.01,.98)',offset:.75},
-      {transform:'translateY(0) scale(1)'}], 650);
+    hop();
   }
   function releasePress(cancelled = false) {
     if (!press) return;
@@ -170,8 +157,8 @@
     releasePress(true);
     timers.forEach(clearTimeout); timers.clear();
     cancelAnimationFrame(frame); frame = 0; point = null; stroke = null;
-    stopAnimations(); neutralGaze(); engaged = false;
-    setState('awake'); delete button.dataset.talking; status.textContent = '';
+    stopAnimations(); clearStroke(); engaged = false;
+    setState('awake'); mascot.follow = false; mascot.frame('idle'); delete button.dataset.talking; status.textContent = '';
     closeMenu();
   }
   root.hidden = false; setState('awake');
@@ -185,7 +172,7 @@
     guide?.interacted();
     engage(); press = {id:event.pointerId, held:false};
     button.setPointerCapture(event.pointerId);
-    setState('pressed'); neutralGaze();
+    setState('pressed'); play('press');
     later('hold', 400, () => { if (press) press.held = true; });
   });
   button.addEventListener('pointerup', event => { if (press?.id === event.pointerId) releasePress(); });
@@ -194,7 +181,7 @@
   button.addEventListener('dragstart', event => event.preventDefault());
   button.addEventListener('focus', () => {
     // Focus alone must not wake a sleeping sheep before the user's activation.
-    if (state === 'awake') { engage(); neutralGaze(); }
+    if (state === 'awake') { engage(); clearStroke(); }
   });
   button.addEventListener('pointerenter', event => {
     cancel('look-away');
@@ -202,15 +189,14 @@
     engage();
     if (state === 'awake' && !button.dataset.talking && now() - lastWelcome > 15000) {
       lastWelcome = now(); speak('Oh! A visitor. Hello, ewe.');
-      animate(button.querySelector('.sheep-ear-left'),
-        [{transform:'rotate(0)'},{transform:'rotate(12deg)',offset:.5},{transform:'rotate(0)'}], 550);
+      if (!mascot.scripted) nod();
     }
   });
   function detectStroke(x, y) {
     const rect = svg.getBoundingClientRect();
-    const sx = (x - rect.left) / rect.width * 96;
-    const sy = (y - rect.top) / rect.height * 76;
-    if (sx < 53 || sx > 89 || sy < 9 || sy > 32 || (state !== 'awake' && state !== 'petting')) {
+    const sx = (x - rect.left) / rect.width * 265;
+    const sy = (y - rect.top) / rect.height * 265;
+    if (sx < 88 || sx > 220 || sy < 18 || sy > 100 || (state !== 'awake' && state !== 'petting')) {
       stroke = null; return;
     }
     const t = now();
@@ -237,17 +223,14 @@
       const dx = point.x - (rect.left + rect.width * .74);
       const dy = point.y - (rect.top + rect.height * .45);
       if (Math.hypot(dx, dy) > 480) {
-        if (!timers.has('look-away')) later('look-away', 600, neutralGaze);
+        if (!timers.has('look-away')) later('look-away', 600, clearStroke);
         return;
       }
       cancel('look-away'); engage();
-      const clamp = (v,l) => Math.max(-l,Math.min(l,v));
-      button.style.setProperty('--gaze-x', `${clamp(dx/85,1.5).toFixed(2)}px`);
-      button.style.setProperty('--gaze-y', `${clamp(dy/100,1.4).toFixed(2)}px`);
-      button.style.setProperty('--head-turn', `${clamp(dx/45,7).toFixed(2)}deg`);
+      mascot.follow = true; mascot.lookAt(point.x, point.y);
     });
   }, {passive:true});
-  hero.addEventListener('pointerleave', () => { stroke = null; later('look-away', 650, neutralGaze); });
+  hero.addEventListener('pointerleave', () => { stroke = null; later('look-away', 650, clearStroke); });
   menu.addEventListener('toggle', () => {
     if (menu.open) cancel('idle'); else idleLater();
   });
@@ -259,8 +242,8 @@
     if (kind === 'pat') pet(true);
     if (kind === 'feed') {
       if (state === 'feeding') return;
-      setState('feeding'); neutralGaze(); speak('A little grass? You get me.', true);
-      later('state', 2500, () => { awake(); speak('Excellent snack. Five baas.', true); });
+      setState('feeding'); speak('A little grass? You get me.', true);
+      play('eat', () => { awake(); speak('Excellent snack. Five baas.', true); });
     }
     if (kind === 'nap') { speak('Just resting my ideas.', true); yawnAndSleep(); }
   }));
@@ -274,7 +257,7 @@
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) quiet(); });
   addEventListener('pagehide', quiet); addEventListener('blur', quiet);
-  motion.addEventListener('change', quiet); finePointer.addEventListener('change', neutralGaze);
+  motion.addEventListener('change', quiet); finePointer.addEventListener('change', clearStroke);
   if ('IntersectionObserver' in window) new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
     if (!visible) quiet();
@@ -349,7 +332,7 @@
       const docked = hero.getBoundingClientRect().bottom <= headerBottom + 16;
       const changedDock = root.classList.contains('is-docked') !== docked;
       root.classList.toggle('is-docked', docked);
-      if (changedDock) { releasePress(true); closeMenu(); neutralGaze(); }
+      if (changedDock) { releasePress(true); closeMenu(); clearStroke(); }
       if (docked) visible = true;
       const readingLine = headerBottom + Math.min(180, (innerHeight - headerBottom) * .28);
       let candidate = null;

@@ -1,0 +1,960 @@
+{
+  "poses": [
+    {
+      "id": "idle",
+      "label": "自然待机",
+      "group": "待机",
+      "values": {
+        "lid": 0
+      }
+    },
+    {
+      "id": "breathe-in",
+      "label": "吸气 · 身体微抬",
+      "group": "待机",
+      "values": {
+        "lift": -1,
+        "squash": 1.015,
+        "stretch": 1.008,
+        "lid": 0
+      }
+    },
+    {
+      "id": "blink-half",
+      "label": "眨眼 · 半闭",
+      "group": "眼睛",
+      "values": {
+        "lid": 0.55
+      }
+    },
+    {
+      "id": "blink-closed",
+      "label": "眨眼 · 全闭",
+      "group": "眼睛",
+      "values": {
+        "closed": 1,
+        "lid": 1
+      }
+    },
+    {
+      "id": "look-left",
+      "label": "看左",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": -3.2,
+        "gaze-y": 0,
+        "lid": 0
+      }
+    },
+    {
+      "id": "look-right",
+      "label": "看右",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": 3.2,
+        "gaze-y": 0,
+        "lid": 0
+      }
+    },
+    {
+      "id": "look-up",
+      "label": "看上",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": 0,
+        "gaze-y": -3.3,
+        "lid": 0
+      }
+    },
+    {
+      "id": "look-down",
+      "label": "看下",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": 0,
+        "gaze-y": 3.3,
+        "lid": 0
+      }
+    },
+    {
+      "id": "look-up-left",
+      "label": "看左上",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": -2.6,
+        "gaze-y": -2.7,
+        "lid": 0
+      }
+    },
+    {
+      "id": "look-up-right",
+      "label": "看右上",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": 2.6,
+        "gaze-y": -2.7,
+        "lid": 0
+      }
+    },
+    {
+      "id": "look-down-left",
+      "label": "看左下",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": -2.6,
+        "gaze-y": 2.7,
+        "lid": 0
+      }
+    },
+    {
+      "id": "look-down-right",
+      "label": "看右下",
+      "group": "眼睛",
+      "values": {
+        "gaze-x": 2.6,
+        "gaze-y": 2.7,
+        "lid": 0
+      }
+    },
+    {
+      "id": "talk-small",
+      "label": "讲解 · 小口型",
+      "group": "表情",
+      "values": {
+        "mouth": 1,
+        "smile": 0,
+        "mouth-y": 0.55,
+        "ear-r": -3,
+        "lid": 0
+      }
+    },
+    {
+      "id": "talk-open",
+      "label": "讲解 · 大口型",
+      "group": "表情",
+      "values": {
+        "mouth": 1,
+        "smile": 0,
+        "mouth-y": 1,
+        "head-y": -1,
+        "ear-r": -6,
+        "lid": 0
+      }
+    },
+    {
+      "id": "think",
+      "label": "思考 · 歪头",
+      "group": "表情",
+      "values": {
+        "tilt": 9,
+        "ear-l": 6,
+        "ear-r": -8,
+        "gaze-y": -2,
+        "lid": 0
+      }
+    },
+    {
+      "id": "happy",
+      "label": "开心 · 弯眼",
+      "group": "表情",
+      "values": {
+        "closed": 0,
+        "happy": 1,
+        "lid": 1,
+        "cheek": 0.45,
+        "ear-l": -6,
+        "ear-r": -8
+      }
+    },
+    {
+      "id": "surprise",
+      "label": "好奇 · 抬头",
+      "group": "表情",
+      "values": {
+        "mouth": 1,
+        "smile": 0,
+        "mouth-y": 0.6,
+        "head-y": -3,
+        "ear-l": -12,
+        "ear-r": -10,
+        "gaze-y": -3,
+        "lid": 0
+      }
+    },
+    {
+      "id": "pat-down",
+      "label": "摸头 · 轻压",
+      "group": "摸头",
+      "values": {
+        "happy": 1,
+        "lid": 1,
+        "cheek": 0.5,
+        "squash": 0.975,
+        "head-y": 4,
+        "ear-l": 7,
+        "ear-r": 8
+      }
+    },
+    {
+      "id": "pat-up",
+      "label": "摸头 · 贴近",
+      "group": "摸头",
+      "values": {
+        "happy": 1,
+        "lid": 1,
+        "cheek": 0.7,
+        "heart": 1,
+        "tilt": -4,
+        "head-y": -2,
+        "ear-l": -8,
+        "ear-r": -5
+      }
+    },
+    {
+      "id": "sniff",
+      "label": "吃草 · 凑近",
+      "group": "吃草",
+      "values": {
+        "tilt": 5,
+        "head-x": 3,
+        "head-y": 2,
+        "gaze-y": 3,
+        "lid": 0
+      }
+    },
+    {
+      "id": "bite",
+      "label": "吃草 · 咬住",
+      "group": "吃草",
+      "values": {
+        "grass": 1,
+        "mouth": 1,
+        "smile": 0,
+        "mouth-y": 0.55,
+        "head-y": 1,
+        "lid": 0
+      }
+    },
+    {
+      "id": "chew-a",
+      "label": "吃草 · 咀嚼 A",
+      "group": "吃草",
+      "values": {
+        "grass": 1,
+        "cheek": 0.2,
+        "grass-x": -2,
+        "grass-r": -5,
+        "head-y": -1,
+        "mouth-y": 0.4,
+        "mouth": 1,
+        "smile": 0,
+        "lid": 0
+      }
+    },
+    {
+      "id": "chew-b",
+      "label": "吃草 · 咀嚼 B",
+      "group": "吃草",
+      "values": {
+        "grass": 1,
+        "cheek": 0.5,
+        "tilt": 2,
+        "grass-x": -4,
+        "grass-r": 4,
+        "head-y": 1,
+        "lid": 0
+      }
+    },
+    {
+      "id": "swallow",
+      "label": "吃草 · 满足",
+      "group": "吃草",
+      "values": {
+        "happy": 1,
+        "lid": 1,
+        "cheek": 0.4,
+        "tilt": -3
+      }
+    },
+    {
+      "id": "drowsy",
+      "label": "困倦 · 半睁眼",
+      "group": "睡觉",
+      "values": {
+        "lid": 0.5,
+        "tilt": 3,
+        "ear-l": 5,
+        "ear-r": 5,
+        "head-y": 2
+      }
+    },
+    {
+      "id": "yawn-small",
+      "label": "哈欠 · 张嘴",
+      "group": "睡觉",
+      "values": {
+        "lid": 0.65,
+        "mouth": 1,
+        "smile": 0,
+        "mouth-y": 0.8,
+        "head-y": -1
+      }
+    },
+    {
+      "id": "yawn-wide",
+      "label": "哈欠 · 最张开",
+      "group": "睡觉",
+      "values": {
+        "closed": 1,
+        "mouth": 1,
+        "smile": 0,
+        "mouth-y": 1.65,
+        "head-y": -3,
+        "ear-l": -5,
+        "ear-r": -4,
+        "lid": 1
+      }
+    },
+    {
+      "id": "settle",
+      "label": "入睡 · 收腿",
+      "group": "睡觉",
+      "values": {
+        "closed": 1,
+        "squash": 0.9,
+        "tuck": -10,
+        "tilt": 5,
+        "lift": 6,
+        "head-y": 5,
+        "leg-fl": 16,
+        "leg-fr": -14,
+        "leg-bl": -10,
+        "leg-br": 10,
+        "lid": 1
+      }
+    },
+    {
+      "id": "sleep-out",
+      "label": "熟睡 · 呼气",
+      "group": "睡觉",
+      "values": {
+        "closed": 1,
+        "squash": 0.79,
+        "stretch": 1.055,
+        "tuck": -22,
+        "sleep": 1,
+        "tilt": 9,
+        "lift": 14,
+        "head-y": 9,
+        "head-x": -4,
+        "leg-fl": 29,
+        "leg-fr": -23,
+        "leg-bl": -24,
+        "leg-br": 22,
+        "ear-l": 12,
+        "ear-r": 9,
+        "lid": 1
+      }
+    },
+    {
+      "id": "sleep-in",
+      "label": "熟睡 · 吸气",
+      "group": "睡觉",
+      "values": {
+        "closed": 1,
+        "squash": 0.81,
+        "stretch": 1.06,
+        "tuck": -22,
+        "sleep": 1,
+        "tilt": 8,
+        "lift": 13,
+        "head-y": 8,
+        "head-x": -4,
+        "leg-fl": 29,
+        "leg-fr": -23,
+        "leg-bl": -24,
+        "leg-br": 22,
+        "ear-l": 12,
+        "ear-r": 9,
+        "lid": 1
+      }
+    },
+    {
+      "id": "wake",
+      "label": "醒来 · 伸展",
+      "group": "睡觉",
+      "values": {
+        "lid": 0.32,
+        "squash": 1.04,
+        "stretch": 0.98,
+        "tilt": -5,
+        "head-y": -4,
+        "ear-l": -10,
+        "ear-r": -12,
+        "leg-fl": -6,
+        "leg-bl": 6
+      }
+    },
+    {
+      "id": "crouch",
+      "label": "跳跃 · 蓄力",
+      "group": "跳跃",
+      "values": {
+        "squash": 0.87,
+        "stretch": 1.06,
+        "tuck": -5,
+        "head-y": 4,
+        "ear-l": 8,
+        "ear-r": 9,
+        "leg-fl": 15,
+        "leg-fr": -12,
+        "leg-bl": -12,
+        "leg-br": 10,
+        "lid": 0
+      }
+    },
+    {
+      "id": "launch",
+      "label": "跳跃 · 起跳",
+      "group": "跳跃",
+      "values": {
+        "lift": -10,
+        "squash": 1.07,
+        "stretch": 0.95,
+        "shadow": 0.85,
+        "ear-l": 12,
+        "ear-r": 12,
+        "leg-fl": -12,
+        "leg-fr": 7,
+        "leg-bl": 8,
+        "leg-br": -7,
+        "lid": 0
+      }
+    },
+    {
+      "id": "air",
+      "label": "跳跃 · 腾空",
+      "group": "跳跃",
+      "values": {
+        "lift": -20,
+        "shadow": 0.7,
+        "tuck": -7,
+        "tilt": -4,
+        "ear-l": -12,
+        "ear-r": -9,
+        "leg-fl": -23,
+        "leg-fr": 17,
+        "leg-bl": 22,
+        "leg-br": -15,
+        "lid": 0
+      }
+    },
+    {
+      "id": "land",
+      "label": "跳跃 · 落地",
+      "group": "跳跃",
+      "values": {
+        "squash": 0.84,
+        "stretch": 1.08,
+        "tuck": -3,
+        "happy": 1,
+        "lid": 1,
+        "head-y": 4,
+        "ear-l": 15,
+        "ear-r": 14,
+        "leg-fl": -13,
+        "leg-fr": 9,
+        "leg-bl": 14,
+        "leg-br": -9
+      }
+    },
+    {
+      "id": "rebound",
+      "label": "跳跃 · 回弹",
+      "group": "跳跃",
+      "values": {
+        "squash": 1.03,
+        "stretch": 0.98,
+        "lift": -2,
+        "ear-l": -8,
+        "ear-r": -6,
+        "head-y": -2,
+        "lid": 0
+      }
+    },
+    {
+      "id": "walk-a",
+      "label": "走路 · 左前步",
+      "group": "走路",
+      "values": {
+        "lift": -1,
+        "leg-fl": -18,
+        "leg-fr": 17,
+        "leg-bl": 17,
+        "leg-br": -18,
+        "ear-l": 3,
+        "ear-r": -3,
+        "lid": 0
+      }
+    },
+    {
+      "id": "walk-b",
+      "label": "走路 · 经过",
+      "group": "走路",
+      "values": {
+        "lift": -2,
+        "leg-fl": 0,
+        "leg-fr": 0,
+        "leg-bl": 0,
+        "leg-br": 0,
+        "ear-l": -2,
+        "ear-r": 2,
+        "lid": 0
+      }
+    },
+    {
+      "id": "walk-c",
+      "label": "走路 · 右前步",
+      "group": "走路",
+      "values": {
+        "lift": -1,
+        "leg-fl": 18,
+        "leg-fr": -17,
+        "leg-bl": -17,
+        "leg-br": 18,
+        "ear-l": -3,
+        "ear-r": 3,
+        "lid": 0
+      }
+    },
+    {
+      "id": "walk-d",
+      "label": "走路 · 换步",
+      "group": "走路",
+      "values": {
+        "leg-fl": 0,
+        "leg-fr": 0,
+        "leg-bl": 0,
+        "leg-br": 0,
+        "ear-l": 2,
+        "ear-r": -2,
+        "lid": 0
+      }
+    },
+    {
+      "id": "turn-glance-left",
+      "label": "先看左侧",
+      "group": "转头",
+      "values": {
+        "gaze-x": -2.7,
+        "lid": 0
+      }
+    },
+    {
+      "id": "turn-left",
+      "label": "轻转向左",
+      "group": "转头",
+      "values": {
+        "tilt": -2,
+        "head-x": -2,
+        "head-y": -0.5,
+        "face-x": -2.5,
+        "head-sx": 0.985,
+        "gaze-x": -2.7,
+        "ear-l": -2,
+        "ear-r": 2,
+        "lid": 0
+      }
+    },
+    {
+      "id": "turn-glance-right",
+      "label": "视线先转向右",
+      "group": "转头",
+      "values": {
+        "tilt": -2,
+        "head-x": -2,
+        "head-y": -0.5,
+        "face-x": -2.5,
+        "head-sx": 0.985,
+        "gaze-x": 2.7,
+        "ear-l": -2,
+        "ear-r": 2,
+        "lid": 0
+      }
+    },
+    {
+      "id": "turn-right",
+      "label": "轻转向右",
+      "group": "转头",
+      "values": {
+        "tilt": 2,
+        "head-x": 2,
+        "head-y": -0.5,
+        "face-x": 2.5,
+        "head-sx": 0.985,
+        "gaze-x": 2.7,
+        "ear-l": 2,
+        "ear-r": -2,
+        "lid": 0
+      }
+    },
+    {
+      "id": "head-up",
+      "label": "轻轻抬头",
+      "group": "转头",
+      "values": {
+        "tilt": -1,
+        "head-y": -3,
+        "gaze-y": -2,
+        "lid": 0
+      }
+    }
+  ],
+  "sequences": {
+    "turn": {
+      "label": "左右转头",
+      "frames": [
+        [
+          "idle",
+          180
+        ],
+        [
+          "turn-glance-left",
+          160
+        ],
+        [
+          "turn-left",
+          440
+        ],
+        [
+          "turn-left",
+          350
+        ],
+        [
+          "turn-glance-right",
+          180
+        ],
+        [
+          "turn-right",
+          600
+        ],
+        [
+          "turn-right",
+          400
+        ],
+        [
+          "idle",
+          550
+        ]
+      ]
+    },
+    "idle": {
+      "label": "呼吸",
+      "frames": [
+        [
+          "idle",
+          600
+        ],
+        [
+          "breathe-in",
+          1400
+        ],
+        [
+          "idle",
+          1400
+        ]
+      ]
+    },
+    "blink": {
+      "label": "眨眼",
+      "frames": [
+        [
+          "idle",
+          250
+        ],
+        [
+          "blink-closed",
+          90
+        ],
+        [
+          "blink-closed",
+          55
+        ],
+        [
+          "idle",
+          145
+        ]
+      ]
+    },
+    "talk": {
+      "label": "讲解",
+      "frames": [
+        [
+          "idle",
+          300
+        ],
+        [
+          "talk-small",
+          160
+        ],
+        [
+          "talk-open",
+          190
+        ],
+        [
+          "idle",
+          140
+        ],
+        [
+          "talk-small",
+          150
+        ],
+        [
+          "talk-open",
+          180
+        ],
+        [
+          "think",
+          550
+        ],
+        [
+          "idle",
+          350
+        ]
+      ]
+    },
+    "pat": {
+      "label": "摸头",
+      "frames": [
+        [
+          "idle",
+          250
+        ],
+        [
+          "pat-down",
+          280
+        ],
+        [
+          "pat-up",
+          400
+        ],
+        [
+          "pat-down",
+          300
+        ],
+        [
+          "pat-up",
+          450
+        ],
+        [
+          "happy",
+          700
+        ],
+        [
+          "idle",
+          350
+        ]
+      ]
+    },
+    "eat": {
+      "label": "吃草",
+      "frames": [
+        [
+          "sniff",
+          450
+        ],
+        [
+          "bite",
+          250
+        ],
+        [
+          "chew-a",
+          280
+        ],
+        [
+          "chew-b",
+          280
+        ],
+        [
+          "chew-a",
+          280
+        ],
+        [
+          "chew-b",
+          280
+        ],
+        [
+          "swallow",
+          600
+        ],
+        [
+          "idle",
+          400
+        ]
+      ]
+    },
+    "sleep": {
+      "label": "入睡",
+      "frames": [
+        [
+          "drowsy",
+          800
+        ],
+        [
+          "yawn-small",
+          350
+        ],
+        [
+          "yawn-wide",
+          650
+        ],
+        [
+          "drowsy",
+          450
+        ],
+        [
+          "settle",
+          500
+        ],
+        [
+          "sleep-out",
+          650
+        ],
+        [
+          "sleep-in",
+          1500
+        ],
+        [
+          "sleep-out",
+          1500
+        ]
+      ]
+    },
+    "wake": {
+      "label": "醒来",
+      "frames": [
+        [
+          "sleep-out",
+          350
+        ],
+        [
+          "settle",
+          400
+        ],
+        [
+          "wake",
+          650
+        ],
+        [
+          "blink-half",
+          200
+        ],
+        [
+          "idle",
+          400
+        ],
+        [
+          "happy",
+          450
+        ],
+        [
+          "idle",
+          300
+        ]
+      ]
+    },
+    "hop": {
+      "label": "蹦一下",
+      "frames": [
+        [
+          "idle",
+          250
+        ],
+        [
+          "crouch",
+          220
+        ],
+        [
+          "launch",
+          130
+        ],
+        [
+          "air",
+          220
+        ],
+        [
+          "land",
+          190
+        ],
+        [
+          "rebound",
+          180
+        ],
+        [
+          "idle",
+          300
+        ]
+      ]
+    },
+    "walk": {
+      "label": "小步走",
+      "frames": [
+        [
+          "walk-a",
+          220
+        ],
+        [
+          "walk-b",
+          160
+        ],
+        [
+          "walk-c",
+          220
+        ],
+        [
+          "walk-d",
+          160
+        ],
+        [
+          "walk-a",
+          220
+        ],
+        [
+          "walk-b",
+          160
+        ],
+        [
+          "walk-c",
+          220
+        ],
+        [
+          "walk-d",
+          160
+        ],
+        [
+          "idle",
+          200
+        ]
+      ]
+    }
+  },
+  "units": {
+    "lift": "px",
+    "head-y": "px",
+    "head-x": "px",
+    "tuck": "px",
+    "grass-x": "px",
+    "gaze-x": "px",
+    "gaze-y": "px",
+    "face-x": "px",
+    "tilt": "deg",
+    "ear-l": "deg",
+    "ear-r": "deg",
+    "leg-fl": "deg",
+    "leg-fr": "deg",
+    "leg-bl": "deg",
+    "leg-br": "deg",
+    "grass-r": "deg",
+    "look-tilt": "deg"
+  }
+}
