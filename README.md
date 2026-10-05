@@ -24,4 +24,8 @@ Repository: `shiqishan319-glitch.github.io`. In Settings → Pages, choose **Dep
 
 ## Personal details
 
-The clickable sheep is drawn in `assets/sheep.svg` and embedded by the build. Greeting text lives in `script.js`. It looks toward nearby mouse movement, responds to clicks or keyboard activation with scripted speech and small reactions, and dozes after inactivity. Timers and animations pause offscreen or when the page is hidden. Touch input has the same click reactions; reduced-motion preferences disable movement. Button feedback, selection colors, navigation indicators, and progressive disclosure transitions are in `style.css`. No external libraries or tracking are used.
+The sheep is drawn in `assets/sheep.svg` and embedded by the build. Its standalone controller, dialogue, and timers live in `sheep.js`. It supports pointer gaze, a short welcome, click responses and count-a-sheep milestones, head strokes, press/release bounce, drowsiness, yawning, sleep/wake, and feeding. The Play disclosure exposes head pats, a grass snack, and nap controls for keyboard and touch users.
+
+The sheep stays in the homepage. Its interactions use no network requests, audio, or persistent visitor storage. Hidden/offscreen cleanup cancels timers, captures, and animation; reduced-motion settings preserve text/state feedback without movement. Keep SVG part class names when swapping in a selected new character.
+
+Build after edits with `python3 build.py` so CSS/JS URL hashes update. Check behavior with `node --test tests/sheep.test.cjs`; these deterministic checks cover gesture thresholds, timer transitions, cancellation, feeding, and reduced motion. Also check native controls and layout in a browser at desktop/mobile widths.

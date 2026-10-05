@@ -4,11 +4,11 @@
   <path d="M30 52v12q3 4 7 0V54m20-1v11q3 4 7 0V51" fill="#e7ddd0"/>
   <path d="M21 48c-10-2-11-13-4-18-3-8 4-15 12-13 4-9 16-10 22-3 9-5 18 0 19 8 10 1 14 10 10 17 5 9-3 18-12 16-5 9-16 8-21 3-9 6-19 2-21-5-5 0-7-2-5-5Z" fill="#fffdf8"/>
   <g class="sheep-look"><g class="sheep-head">
-    <path d="M65 29c-7-9-14-7-11-1l7 8m17-6c9-7 15-3 10 3l-8 4" fill="#d9c9e4"/>
+    <path class="sheep-ear sheep-ear-left" d="M65 29c-7-9-14-7-11-1l7 8" fill="#d9c9e4"/><path class="sheep-ear sheep-ear-right" d="M78 30c9-7 15-3 10 3l-8 4" fill="#d9c9e4"/>
     <path d="M62 25c2-6 14-7 19 0l1 14c0 13-19 16-22 2Z" fill="#efe5d8"/>
     <path d="M59 25c-2-5 1-9 6-8 3-5 9-4 11-1 6-2 11 4 8 9-4 2-7 0-9-1-6 3-11 3-16 1Z" fill="#fffdf8"/>
     <g class="sheep-eyes" stroke="none"><ellipse cx="66" cy="35" rx="3.4" ry="4" fill="#fffdf8"/><ellipse cx="77" cy="34" rx="3.4" ry="4" fill="#fffdf8"/><g class="sheep-pupils" fill="#425c49"><ellipse cx="66" cy="35" rx="1.6" ry="2.1"/><ellipse cx="77" cy="34" rx="1.6" ry="2.1"/></g></g><path class="sheep-happy-eyes" d="M63 36q3-4 6 0m5-1q3-4 6 0" opacity="0" stroke-width="1.6"/><path class="sheep-sleep-eyes" d="m63 36 6 0m5-1 6 0" opacity="0" stroke-width="1.6"/>
-    <path d="m69 41 3 2 3-3" stroke-width="1.6"/>
+    <path class="sheep-mouth" d="m69 41 3 2 3-3" stroke-width="1.6"/><ellipse class="sheep-yawn" cx="72" cy="43" rx="3" ry="4" fill="#55705b" stroke="none" opacity="0"/><g class="sheep-grass" opacity="0" stroke="#6e8e54" stroke-width="1.6"><path d="M74 44q8-4 15-1M82 43q-1-7 5-8-1 5-5 8m2 0q6 5 9 0-5-2-9 0"/></g>
     <path d="m63 40 2 1m13-2 2-1" stroke="#c29caa" stroke-width="2.6"/>
   </g></g>
   </g>
