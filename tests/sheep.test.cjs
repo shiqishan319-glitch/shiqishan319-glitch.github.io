@@ -52,7 +52,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
     constructor(root,options){this.x=400;this.y=300;this.options=options;}
     stop(){clearTimeoutMock(this.trip);if(this.moving){this.moving=false;this.options.rest();}}
     place(x,y){this.x=x;this.y=y;calls.push(['place',x,y]);}
-    approach(x,y){calls.push(['approach',x,y]);return true;}
+    feedSpot(x,y){calls.push(['feed-spot',x,y]);return !reduced&&withGrass?{x:x-24,y:y-70,grassX:x,grassY:y}:null;}
     bounds(){return {width:82,height:92};}
     forageSpot(){return withGrass?{x:200,y:300,grassX:220,grassY:370}:null;}
     clearRoute(){return true;}
@@ -181,10 +181,27 @@ test('cancelled dragging stays at its last position',()=>{
 test('small pointer jitter preserves a normal click',()=>{
  const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:422,clientY:324});s.up();s.b.emit('click',{detail:1});assert.match(s.say(),/hello/);assert.ok(!s.calls.some(c=>c[0]==='place'));
 });
-test('blank-space double click summons; controls and text selection do not',()=>{
- const s=setup();const target={matches:()=>true,closest:()=>null};s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});assert.ok(s.calls.some(c=>c[0]==='approach'));
- const n=s.calls.filter(c=>c[0]==='approach').length;target.closest=()=>({});s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});assert.equal(s.calls.filter(c=>c[0]==='approach').length,n);
- target.closest=()=>null;s.window.getSelection=()=>({toString:()=> 'selected text'});s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});assert.equal(s.calls.filter(c=>c[0]==='approach').length,n);
+test('blank-space double click plants food; controls and selected text keep their behavior',()=>{
+ const s=setup(false,false,true),target={matches:()=>true,closest:()=>null};
+ s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});
+ assert.equal(s.get('.meadow-grass').hidden,false);assert.equal(s.get('.meadow-grass').style['--grass-left'],'200px');
+ target.closest=()=>({});s.doc.emit('dblclick',{target,button:0,clientX:400,clientY:300});
+ target.closest=()=>null;s.window.getSelection=()=>({toString:()=> 'selected text'});s.doc.emit('dblclick',{target,button:0,clientX:400,clientY:300});
+ assert.equal(s.calls.filter(c=>c[0]==='feed-spot').length,1);
+ s.tick(1400);assert.ok(s.calls.some(c=>c[0]==='grass-trip'));s.tick(3000);assert.equal(s.state(),'feeding');
+});
+test('a second feeding replaces the old trip without eating at the old location',()=>{
+ const s=setup(false,false,true),target={matches:()=>true,closest:()=>null};
+ s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});s.tick(2400);
+ s.doc.emit('dblclick',{target,button:0,clientX:350,clientY:450});s.tick(2500);
+ assert.equal(s.state(),'awake');assert.equal(s.get('.meadow-grass').style['--grass-left'],'350px');
+ s.tick(1900);assert.equal(s.state(),'feeding');
+});
+test('explicit feeding wakes a sleeping sheep and respects reduced motion',()=>{
+ const target={matches:()=>true,closest:()=>null},s=setup(false,false,true);
+ s.tick(47000);assert.equal(s.state(),'sleeping');
+ s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});s.tick(4400);assert.equal(s.state(),'feeding');
+ const r=setup(true,false,true);r.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});r.tick(5000);assert.ok(!r.calls.some(c=>c[0]==='grass-trip'));
 });
 test('page-end celebration happens once and stays quiet for screen readers',()=>{
  const s=setup();s.get('footer').rect={bottom:780};s.window.emit('scroll');s.tick(1800);assert.match(s.get('.sheep-bubble').textContent,/standing ovation/);assert.equal(s.say(),'');const n=s.calls.filter(c=>c[1]==='hop').length;s.window.emit('scroll');s.tick(2000);assert.equal(s.calls.filter(c=>c[1]==='hop').length,n);
@@ -261,4 +278,11 @@ test('picking up adds a hanging pose without moving the pointer anchor',()=>{
 });
 test('a quick tap never triggers the suspended pose',()=>{
  const s=setup();s.down();s.tick(80);s.up();assert.ok(!s.calls.some(c=>c[1]==='carried'));assert.equal(s.b.dataset.carried,undefined);
+});
+
+test('the pointer left over offered grass does not interrupt the meal approach',()=>{
+ const s=setup(false,false,true),target={matches:()=>true,closest:()=>null};
+ s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});s.tick(1400);
+ s.b.emit('pointerenter',{pointerType:'mouse'});s.move(71,34);s.tick(3000);
+ assert.equal(s.state(),'feeding');
 });

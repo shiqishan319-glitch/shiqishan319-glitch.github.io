@@ -55,3 +55,13 @@ test('grass grows in reachable whitespace within the viewport',()=>{
 test('no grass is planted when every candidate overlaps content',()=>{
  const s=setup();s.obstacle({left:0,right:1200,top:0,bottom:800,width:1200,height:800});assert.equal(s.pet.forageSpot(),null);
 });
+
+test('manual feeding keeps grass at the click and aligns the arriving sheep with it',()=>{
+ const s=setup(),spot=s.pet.feedSpot(800,550);assert.ok(spot);assert.equal(spot.grassX,800);assert.equal(spot.grassY,550);
+ assert.equal(spot.x+82*.29,spot.grassX);assert.equal(spot.y+92*.76,spot.grassY);
+});
+test('manual feeding rejects blocked or offscreen positions',()=>{
+ const s=setup();assert.equal(s.pet.feedSpot(0,0),null);
+ s.obstacle({left:0,right:1200,top:0,bottom:800,width:1200,height:800});assert.equal(s.pet.feedSpot(800,550),null);
+ s.allow(false);assert.equal(s.pet.feedSpot(800,550),null);
+});

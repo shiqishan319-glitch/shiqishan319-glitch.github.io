@@ -118,6 +118,10 @@
     if (roamer.moving) roamer.stop();
     const spot=roamer.forageSpot();
     if (!spot) { scheduleGrass(6000); return; }
+    plantGrass(spot);
+  }
+  function plantGrass(spot) {
+    clearGrass(); cancel('grow-grass');
     pasture=spot; grass.style.setProperty('--grass-left',spot.grassX+'px');
     grass.style.setProperty('--grass-top',spot.grassY+'px');
     grass.hidden=false; delete grass.dataset.eaten;
@@ -312,7 +316,7 @@
   });
   button.addEventListener('pointerenter', event => {
     cancel('look-away');
-    if (event.pointerType !== 'mouse' || !finePointer.matches || resting()) return;
+    if (event.pointerType !== 'mouse' || !finePointer.matches || resting() || grazingTrip) return;
     roamer?.stop(); engage();
     if (state === 'awake' && !button.dataset.talking && now() - lastWelcome > 15000) {
       lastWelcome = now(); speak('Oh! A visitor. Hello, ewe.');
@@ -353,7 +357,7 @@
         if (!timers.has('look-away')) later('look-away', 600, clearStroke);
         return;
       }
-      if (Math.hypot(dx,dy)<75) {
+      if (Math.hypot(dx,dy)<75 && !grazingTrip) {
         roamer?.stop(); cancel('wander');
         engage();
       }
@@ -384,8 +388,7 @@
     canMove: () => active() && !motion.matches && state === 'awake' && !press && !guide?.isOpen()
       && !root.querySelector(':focus-visible'),
     walk: walking,
-    rest: () => { grazingTrip=false; stopAnimations(); play('rest'); },
-    arrive: () => { speak('Here I am. What are we reading?',true); hop(); }
+    rest: () => { grazingTrip=false; stopAnimations(); play('rest'); }
 
   });
   cancel('grow-grass');scheduleGrass(9000+Math.random()*3000);
@@ -398,10 +401,15 @@
       || root.contains(target) || !target.matches('body,main,section,article,div')
       || target.closest('a,button,input,textarea,select,summary,[contenteditable],header,nav,footer')
       || window.getSelection()?.toString().trim()) return;
+    if (press || !active()) return;
     guide?.interacted(); engaged=true; awake();
-    if (!roamer.approach(event.clientX,event.clientY)) {
-      speak(motion.matches ? 'Right here with ewe.' : 'I’ll wave from here. That path is a little busy.',true); nod();
-    } else speak('Coming over. Tiny legs, big effort.',true);
+    const spot=grass && roamer.feedSpot(event.clientX,event.clientY);
+    if (spot) {
+      plantGrass(spot);
+      speak('Fresh grass! Coming for a nibble.',true);
+    } else {
+      speak(motion.matches ? 'Thank ewe. I’m staying cozy here.' : 'A little open space for my snack, please?',true); nod();
+    }
   });
   let finishedReading=false;
   addEventListener('scroll', () => {

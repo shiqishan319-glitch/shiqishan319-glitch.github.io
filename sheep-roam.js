@@ -96,18 +96,22 @@
       }
       return null;
     }
-    approach(pointerX,pointerY) {
-      if(!this.options.canMove())return false;
-      const b=this.bounds();
+    feedSpot(pointerX,pointerY) {
+      if(!this.options.canMove())return null;
+      const b=this.bounds(),obstacles=this.obstacles();
       const controls=[...document.querySelectorAll('a,button,input,summary')].filter(el=>!this.root.contains(el))
         .flatMap(el=>[...el.getClientRects()]);
-      for(const [dx,dy] of [[-b.width/2,-b.height+12],[-b.width/2,8],[16,-b.height/2],[-b.width-16,-b.height/2]]) {
-        const x=Math.max(8,Math.min(innerWidth-b.width-8,pointerX+dx));
-        const y=Math.max(b.top,Math.min(innerHeight-b.height-12,pointerY+dy));
-        if(!this.clearRoute(x,y,controls))continue;
-        this.moveTo(x,y,()=>this.options.arrive?.());return true;
+      // Prefer the clicked spot; shift only a little if the grass would cover nearby text.
+      for(const [dx,dy] of [[0,0],[0,32],[0,-32],[-42,0],[42,0]]) {
+        const grassX=pointerX+dx,grassY=pointerY+dy;
+        const left=grassX<this.x+b.width*.5;
+        const x=grassX-b.width*(left?.29:.71),y=grassY-b.height*.76;
+        if(x<8 || x>innerWidth-b.width-8 || y<b.top || y>innerHeight-b.height-12)continue;
+        if((x<this.x)!==left || !this.clearRoute(x,y,controls))continue;
+        if(obstacles.some(r=>grassX-18<r.right+6 && grassX+18>r.left-6 && grassY-26<r.bottom+6 && grassY+3>r.top-6))continue;
+        return {x,y,grassX,grassY};
       }
-      return false;
+      return null;
     }
     moveTo(x,y,arrive) {
       this.stop();
