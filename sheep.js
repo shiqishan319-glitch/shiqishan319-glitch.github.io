@@ -17,8 +17,6 @@
   const bubble = button.querySelector('.sheep-bubble');
   const caption = button.querySelector('.sheep-caption');
   const status = root.querySelector('.sheep-status');
-  const menu = root.querySelector('.sheep-tools');
-  const feedButton = root.querySelector('[data-sheep-action="feed"]');
   const hero = document.querySelector('.hero');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
@@ -33,6 +31,7 @@
   let press = null, skipPointerClickUntil = 0, frame = 0, point = null;
   let stroke = null;
   let guide = null;
+  let lastSnack = -Infinity;
   const now = () => performance.now();
   const active = () => visible && !document.hidden;
   const resting = () => ['drowsy', 'yawning', 'sleeping'].includes(state);
@@ -59,14 +58,13 @@
     stroke = null;
   }
   function setState(next) {
-    cancel('state'); cancel('blink'); cancel('idle'); cancel('reaction');
+    cancel('state'); cancel('blink'); cancel('idle'); cancel('reaction'); cancel('wander');
     stopAnimations(); delete button.dataset.mood;
     state = next; button.dataset.state = next;
     mascot.follow = finePointer.matches && next === 'awake' && active();
     button.toggleAttribute('data-sleeping', next === 'sleeping');
     caption.textContent = ({sleeping:'Daydreaming…',drowsy:'Getting sleepy',yawning:'A tiny yawn',
       petting:'More head pats?',feeding:'Nom, nom',pressed:'Soft little sheep',waking:'Oh, hello again'}[next] || 'Say hello');
-    feedButton.disabled = next === 'feeding';
   }
   function speak(text, announce = false) {
     bubble.textContent = text; button.dataset.talking = 'true';
@@ -81,12 +79,24 @@
     });
   }
   function idleLater() {
-    cancel('idle');
-    if (!engaged || state !== 'awake' || menu.open || !active()) return;
-    later('idle', 12000, () => {
+    cancel('idle'); cancel('wander');
+    if (!engaged || state !== 'awake' || !active()) return;
+    // A quiet glance, then an occasional snack; never interrupt a project note.
+    later('wander', 8000, () => {
+      if (!motion.matches && !mascot.scripted && !guide?.isOpen()) play('turn');
+    });
+    later('idle', 20000, () => {
+      if (guide?.isOpen()) { idleLater(); return; }
+      if (now() - lastSnack >= 90000) { snack(); return; }
       setState('drowsy'); play('drowsy');
       later('state', 4000, yawnAndSleep);
     });
+  }
+  function snack() {
+    if (state !== 'awake') return;
+    lastSnack = now(); setState('feeding');
+    // Passive reactions are visual; no unsolicited screen-reader announcement.
+    play('eat', awake);
   }
   function awake() {
     setState('awake'); play('rest'); scheduleBlink(); idleLater();
@@ -101,7 +111,6 @@
   }
   function nod() { play('talk', () => { if (motion.matches) play('rest'); }); }
   function hop() { play('hop', () => { if (motion.matches) play('rest'); }); }
-  function happyHeart() { play('pat', () => { if (motion.matches) play('rest'); }); }
   function wakeGreeting() {
     engaged = true; setState('waking');
     speak('I was thinking. Probably.', true);
@@ -109,7 +118,7 @@
   }
   function pet(announce = false) {
     guide?.interacted();
-    if (state === 'feeding' || state === 'pressed') return;
+    if (state === 'pressed') return;
     engaged = true; lastPat = now(); setState('petting');
     if (announce || now() - lastPatSpeech > 8000) {
       speak('That’s the spot. Thank ewe.', announce); lastPatSpeech = now();
@@ -117,7 +126,7 @@
     play('pat', awake);
   }
   function greet() {
-    if (state === 'feeding' || state === 'waking') return;
+    if (state === 'waking') return;
     if (resting()) { wakeGreeting(); return; }
     const fast = now() - lastClick < 600; lastClick = now();
     engage(); awake(); clickCount++;
@@ -126,7 +135,7 @@
     } else if (clickCount === 10) {
       speak('Ten hellos. Still just one sheep.', true); hop();
     } else if (fast) {
-      speak('More head pats? Baa-liss.', true); button.dataset.mood = 'love'; happyHeart();
+      pet(true);
     } else {
       speak(lines[(clickCount - 1) % lines.length], true);
       button.dataset.mood = 'hello';
@@ -148,10 +157,6 @@
       if (prior.held && !cancelled) bounce(); else awake();
     }
   }
-  function closeMenu(focus = false) {
-    menu.open = false;
-    if (focus) menu.querySelector('summary').focus({preventScroll:true});
-  }
   function quiet() {
     guide?.pause();
     releasePress(true);
@@ -159,16 +164,15 @@
     cancelAnimationFrame(frame); frame = 0; point = null; stroke = null;
     stopAnimations(); clearStroke(); engaged = false;
     setState('awake'); mascot.follow = false; mascot.frame('idle'); delete button.dataset.talking; status.textContent = '';
-    closeMenu();
   }
-  root.hidden = false; setState('awake');
+  root.hidden = false; setState('awake'); engage();
   button.addEventListener('click', event => {
     guide?.interacted();
     if (event.detail !== 0 && now() < skipPointerClickUntil) return;
     greet();
   });
   button.addEventListener('pointerdown', event => {
-    if (!event.isPrimary || event.button !== 0 || press || resting() || state === 'feeding' || state === 'waking') return;
+    if (!event.isPrimary || event.button !== 0 || press || resting() || state === 'waking') return;
     guide?.interacted();
     engage(); press = {id:event.pointerId, held:false};
     button.setPointerCapture(event.pointerId);
@@ -231,36 +235,20 @@
     });
   }, {passive:true});
   hero.addEventListener('pointerleave', () => { stroke = null; later('look-away', 650, clearStroke); });
-  menu.addEventListener('toggle', () => {
-    if (menu.open) cancel('idle'); else idleLater();
-  });
-  root.querySelectorAll('[data-sheep-action]').forEach(action => action.addEventListener('click', () => {
-    guide?.interacted();
-    const kind = action.dataset.sheepAction;
-    // Restore focus before starting an action so focus never changes its state.
-    closeMenu(true); engaged = true;
-    if (kind === 'pat') pet(true);
-    if (kind === 'feed') {
-      if (state === 'feeding') return;
-      setState('feeding'); speak('A little grass? You get me.', true);
-      play('eat', () => { awake(); speak('Excellent snack. Five baas.', true); });
-    }
-    if (kind === 'nap') { speak('Just resting my ideas.', true); yawnAndSleep(); }
-  }));
-  document.addEventListener('pointerdown', event => { if (!root.contains(event.target)) closeMenu(); });
-  document.addEventListener('focusin', event => { if (!root.contains(event.target)) closeMenu(); });
   root.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
-      event.preventDefault(); guide?.dismiss(); closeMenu(true); releasePress(true);
+      event.preventDefault(); guide?.dismiss(); releasePress(true);
       cancel('message'); delete button.dataset.talking; status.textContent = '';
     }
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) quiet(); });
   addEventListener('pagehide', quiet); addEventListener('blur', quiet);
+  addEventListener('focus', () => { if (active()) engage(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && visible) engage(); });
   motion.addEventListener('change', quiet); finePointer.addEventListener('change', clearStroke);
   if ('IntersectionObserver' in window) new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
-    if (!visible) quiet();
+    if (!visible) quiet(); else engage();
   }).observe(root);
   // Guide prose is authored alongside resume content, not generated from visitor data.
   guide = setupProjectGuide();
@@ -277,7 +265,6 @@
     const count = root.querySelector('.sheep-guide-count');
     const more = root.querySelector('.sheep-guide-more');
     const close = root.querySelector('.sheep-guide-close');
-    const explain = root.querySelector('.sheep-explain');
     const shortcut = root.querySelector('.sheep-project-prompt');
     const autoButton = root.querySelector('.sheep-auto');
     const seen = new Set();
@@ -302,7 +289,7 @@
     function show(manual = false) {
       if (!current || !root.classList.contains('is-docked')) return;
       cancel('guide-open'); cancel('message'); delete button.dataset.talking;
-      closeMenu(); engaged = true; awake();
+      engaged = true; awake(); nod();
       index = 0; pinned = manual; render(); card.hidden = false; seen.add(current.id);
       if (manual) {
         status.textContent = `${current.title}. ${current.notes[0]}`;
@@ -319,7 +306,7 @@
       const delay = Math.max(1000, lastAuto + 10000 - now(), holdUntil - now());
       later('guide-open', delay, () => {
         if (!automatic || current?.id !== id || seen.has(id)) return;
-        if (menu.open || ['pressed','petting','feeding','waking'].includes(state)) {
+        if (['pressed','petting','feeding','waking'].includes(state)) {
           holdUntil = now() + 1200; scheduleNote(); return;
         }
         show();
@@ -332,7 +319,7 @@
       const docked = hero.getBoundingClientRect().bottom <= headerBottom + 16;
       const changedDock = root.classList.contains('is-docked') !== docked;
       root.classList.toggle('is-docked', docked);
-      if (changedDock) { releasePress(true); closeMenu(); clearStroke(); }
+      if (changedDock) { releasePress(true); clearStroke(); }
       if (docked) visible = true;
       const readingLine = headerBottom + Math.min(180, (innerHeight - headerBottom) * .28);
       let candidate = null;
@@ -344,7 +331,6 @@
       if (candidate?.id !== current?.id) {
         cancel('guide-open'); hide(); current = candidate; index = 0;
       }
-      explain.disabled = !current;
       shortcut.hidden = !current || !docked;
       if (!docked) { cancel('guide-open'); hide(); }
       else scheduleNote();
@@ -354,7 +340,6 @@
     }
     function manualExplain() { show(true); }
     shortcut.addEventListener('click', manualExplain);
-    explain.addEventListener('click', manualExplain);
     more.addEventListener('click', () => {
       if (!current) return;
       pin(); index = (index + 1) % current.notes.length; render();
@@ -369,7 +354,6 @@
       if (!automatic) { cancel('guide-open'); hide(); }
       else scheduleNote();
     });
-    menu.addEventListener('toggle', () => { if (menu.open) hide(); else scheduleNote(); });
     addEventListener('scroll', requestUpdate, {passive:true});
     addEventListener('resize', requestUpdate); addEventListener('load', requestUpdate);
     addEventListener('focus', requestUpdate);
@@ -379,6 +363,7 @@
     return {
       pause() { cancel('guide-open'); hide(); cancelAnimationFrame(updateFrame); updateFrame = 0; },
       interacted() { holdUntil = now() + 10000; cancel('guide-open'); hide(); },
+      isOpen() { return !card.hidden; },
       dismiss
     };
   }

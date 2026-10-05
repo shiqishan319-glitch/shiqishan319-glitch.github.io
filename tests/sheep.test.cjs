@@ -72,29 +72,33 @@ test('clicks count once; third hello unlocks the count-a-sheep line',()=>{
  const s=setup();for(let i=0;i<3;i++){s.down();s.tick(50);s.up();s.b.emit('click',{detail:1});s.tick(700);}assert.match(s.say(),/three times/);
 });
 test('holding bounces once; cancel releases without a greeting or count',()=>{
- const s=setup();s.down();assert.equal(s.state(),'pressed');s.tick(450);s.up();assert.match(s.say(),/Springy/);s.b.emit('click',{detail:1});assert.match(s.say(),/Springy/);
- s.tick(700);s.down();s.tick(450);s.b.emit('pointercancel');assert.equal(s.state(),'awake');s.tick(20000);assert.notEqual(s.state(),'pressed');
+ const s=setup();s.down();s.tick(450);s.up();assert.match(s.say(),/Springy/);s.b.emit('click',{detail:1});assert.match(s.say(),/Springy/);
+ s.tick(700);s.down();s.tick(450);s.b.emit('pointercancel');assert.equal(s.state(),'awake');
 });
 test('head stroking needs reversals and duration; ordinary passing does not pet',()=>{
- const s=setup();s.move(60,20);s.tick(200);s.move(75,20);s.tick(200);assert.equal(s.state(),'awake');s.move(60,20);s.tick(200);s.move(75,20);assert.equal(s.state(),'petting');assert.match(s.get('.sheep-bubble').textContent,/spot/);s.tick(2800);assert.equal(s.state(),'awake');
+ const s=setup();s.move(60,20);s.tick(200);s.move(75,20);s.tick(200);assert.equal(s.state(),'awake');s.move(60,20);s.tick(200);s.move(75,20);assert.equal(s.state(),'petting');s.tick(2800);assert.equal(s.state(),'awake');
 });
-test('idle progresses through drowsy, yawn, sleep; focus preserves sleep until click',()=>{
- const s=setup();s.click();s.tick(12000);assert.equal(s.state(),'drowsy');s.tick(4000);assert.equal(s.state(),'yawning');s.tick(6400);assert.equal(s.state(),'sleeping');s.b.emit('focus');assert.equal(s.state(),'sleeping');s.click();assert.equal(s.state(),'waking');assert.match(s.say(),/thinking/);s.tick(2800);assert.equal(s.state(),'awake');
+test('quick taps give head pats, including keyboard activation',()=>{
+ const s=setup();s.click();s.tick(150);s.click();assert.equal(s.state(),'petting');assert.match(s.say(),/Thank ewe/);s.tick(2800);assert.equal(s.state(),'awake');
 });
-test('feeding completes without normal clicks or a second feed resetting it',()=>{
- const s=setup();s.actions[1].emit('click');assert.equal(s.state(),'feeding');assert.equal(s.actions[1].disabled,true);s.tick(1000);s.click();s.actions[1].emit('click');s.tick(1900);assert.equal(s.state(),'awake');assert.equal(s.actions[1].disabled,false);assert.match(s.say(),/Five baas/);
+test('idle glances, snacks once, then sleeps; focus does not wake it',()=>{
+ const s=setup();s.tick(8000);assert.ok(s.calls.some(c=>c[1]==='turn'));
+ s.tick(12000);assert.equal(s.state(),'feeding');assert.equal(s.say(),'');
+ s.tick(2820);assert.equal(s.state(),'awake');
+ s.tick(20000);assert.equal(s.state(),'drowsy');s.tick(4000);assert.equal(s.state(),'yawning');s.tick(6400);assert.equal(s.state(),'sleeping');
+ s.b.emit('focus');assert.equal(s.state(),'sleeping');s.click();assert.equal(s.state(),'waking');s.tick(2750);assert.equal(s.state(),'awake');
 });
-test('explicit head pat and nap work without a pointer',()=>{
- const s=setup();s.actions[0].emit('click');assert.equal(s.state(),'petting');s.tick(2000);s.actions[2].emit('click');assert.equal(s.state(),'yawning');s.tick(6400);assert.equal(s.state(),'sleeping');
+test('pointer activity postpones passive snacks and sleep',()=>{
+ const s=setup();for(let i=0;i<6;i++){s.tick(5000);s.move(60,30);s.tick(0);}assert.equal(s.state(),'awake');assert.ok(!s.calls.some(c=>c[1]==='eat'));
 });
-test('offscreen and hidden page cancel all timers, queued movement and press',()=>{
+test('offscreen and hidden page cancel all timers, movement and press',()=>{
  for(const mode of ['offscreen','hidden']){const s=setup();s.click();s.move(75,20);s.down();s[mode]();assert.equal(s.jobs.size,0);assert.equal(s.state(),'awake');assert.equal(s.say(),'');s.tick(30000);assert.equal(s.jobs.size,0);}
 });
-test('reduced motion preserves all accessible state feedback with no WAAPI animations',()=>{
- const s=setup(true);s.click();s.actions[0].emit('click');s.tick(2000);s.down();s.tick(450);s.up();s.actions[1].emit('click');s.tick(2500);s.actions[2].emit('click');s.tick(6400);assert.equal(s.state(),'sleeping');s.click();assert.equal(s.state(),'waking');assert.equal(s.animations(),0);
+test('reduced motion skips idle glancing and automatic blinking',()=>{
+ const s=setup(true);s.tick(19000);assert.ok(!s.calls.some(c=>['turn','blink'].includes(c[1])));s.click();assert.ok(s.say());assert.equal(s.animations(),0);
 });
-test('changing motion preference cancels in-flight feeding and pending callbacks',()=>{
- const s=setup();s.actions[1].emit('click');s.motion.matches=true;s.motion.emit('change');assert.equal(s.state(),'awake');assert.equal(s.actions[1].disabled,false);assert.equal(s.jobs.size,0);
+test('changing motion preference cancels feeding and pending callbacks',()=>{
+ const s=setup();s.tick(20000);assert.equal(s.state(),'feeding');s.motion.matches=true;s.motion.emit('change');assert.equal(s.state(),'awake');assert.equal(s.jobs.size,0);
 });
 
 test('project guide docks, waits for reading, and returns home without moving focus to a note',()=>{
@@ -122,7 +126,7 @@ test('muting suppresses automatic notes but preserves manual explanations and fu
  s.get('.sheep-guide-more').emit('click');assert.equal(s.get('.sheep-guide-text').textContent,'alpha overview');
 });
 test('pet interaction delays commentary and hiding the page cancels a pending guide',()=>{
- const s=setup(false,true);s.project('alpha');s.actions[1].emit('click');s.tick(1200);assert.equal(s.get('.sheep-guide-card').hidden,true);
+ const s=setup(false,true);s.project('alpha');s.click();s.tick(150);s.click();s.tick(1200);assert.equal(s.get('.sheep-guide-card').hidden,true);
  s.window.emit('scroll');s.tick(0);s.hidden();assert.equal(s.jobs.size,0);assert.equal(s.get('.sheep-guide-card').hidden,true);
 });
 
@@ -132,7 +136,15 @@ test('automatic blink uses BU without resetting its current gaze',()=>{
  assert.ok(s.calls.some(c=>c[0]==='look'));
  assert.ok(!s.calls.some(c=>c[0]==='frame'));
 });
-test('a new action cancels completion of the previous action',()=>{
- const s=setup();s.actions[0].emit('click');s.tick(1000);s.actions[2].emit('click');
- s.tick(2000);assert.equal(s.state(),'yawning');s.tick(4400);assert.equal(s.state(),'sleeping');
+test('a pinned project note prevents idle snacks and naps',()=>{
+ const s=setup(false,true);s.project('alpha');s.tick(1000);s.get('.sheep-project-prompt').emit('click');s.tick(60000);
+ assert.equal(s.state(),'awake');assert.ok(!s.calls.some(c=>['eat','sleep','turn'].includes(c[1])));
+});
+test('Play menu is absent; reading-note preference remains in the guide',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+ assert.ok(!html.includes('sheep-tools'));assert.ok(!html.includes('data-sheep-action'));assert.ok(html.includes('class="sheep-auto"'));
+});
+
+test('an intentional click interrupts passive grazing immediately',()=>{
+ const s=setup();s.tick(20000);assert.equal(s.state(),'feeding');s.click();assert.equal(s.state(),'awake');assert.match(s.say(),/hello/);s.tick(3000);assert.equal(s.state(),'awake');
 });
