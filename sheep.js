@@ -30,6 +30,7 @@
   let lastClick = -Infinity, lastWelcome = -Infinity, lastPat = -Infinity, lastPatSpeech = -Infinity;
   let press = null, skipPointerClickUntil = 0, frame = 0, point = null;
   let stroke = null;
+  let nextDoubleAction = 'feed';
   let guide = null;
   let roamer = null;
   const grass = document.querySelector('.meadow-grass');
@@ -156,13 +157,13 @@
     dropping.hidden=false;
     later('dropping',7000,clearDropping);
   }
-  function snack() {
+  function snack(offered = false) {
     if (state !== 'awake') return;
     setState('feeding');
     if (pasture) later('grass-bite',1300,()=>{if(grass) grass.dataset.eaten='true';});
     // Passive reactions are visual; no unsolicited screen-reader announcement.
     play('eat', () => {
-      const finishedMeal=Boolean(pasture);
+      const finishedMeal=offered || Boolean(pasture);
       clearGrass();awake();scheduleGrass();
       if (finishedMeal) maybeLeaveDropping();
     });
@@ -280,11 +281,27 @@
   button.addEventListener('click', event => {
     guide?.interacted();
     if ((event.detail !== 0 || event.pointerType) && now() < skipPointerClickUntil) return;
-    greet();
+    if (event.detail === 0 && !event.pointerType) { greet(); return; }
+    // Wait briefly so a double-click does not also deliver two greetings.
+    if (event.detail >= 2) { cancel('single-click'); return; }
+    later('single-click',320,greet);
+  });
+  button.addEventListener('dblclick', event => {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
+      || press || !active() || now() < skipPointerClickUntil) return;
+    cancel('single-click'); guide?.interacted(); engaged=true;
+    clearGrass(); awake(); lastClick=now();
+    if (nextDoubleAction === 'feed') {
+      nextDoubleAction='pat';
+      speak('A little snack? Thank ewe!',true); snack(true);
+    } else {
+      nextDoubleAction='feed'; pet(true);
+    }
   });
   button.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0 || press || !roamer) return;
     event.preventDefault();
+    cancel('single-click');
     const wasResting=resting() || state==='waking';
     guide?.interacted();
     engaged=true; skipPointerClickUntil=0;

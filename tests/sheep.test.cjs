@@ -179,7 +179,7 @@ test('cancelled dragging stays at its last position',()=>{
  const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:520,clientY:350});s.b.emit('pointercancel',{pointerId:1});assert.ok(!s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));assert.equal(s.b.dataset.carried,undefined);
 });
 test('small pointer jitter preserves a normal click',()=>{
- const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:422,clientY:324});s.up();s.b.emit('click',{detail:1});assert.match(s.say(),/hello/);assert.ok(!s.calls.some(c=>c[0]==='place'));
+ const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:422,clientY:324});s.up();s.b.emit('click',{detail:1});s.tick(320);assert.match(s.say(),/hello/);assert.ok(!s.calls.some(c=>c[0]==='place'));
 });
 test('blank-space double click plants food; controls and selected text keep their behavior',()=>{
  const s=setup(false,false,true),target={matches:()=>true,closest:()=>null};
@@ -258,11 +258,11 @@ test('capture failure still supports document-level dragging and release',()=>{
  const s=setup();s.b.setPointerCapture=()=>{throw Error('capture unavailable');};s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.doc.emit('pointerup',{pointerId:1});assert.equal(s.state(),'landing');
 });
 test('a fresh click after a drop is not swallowed by old drag suppression',()=>{
- const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.up();s.down();s.up();s.b.emit('click',{detail:1});assert.match(s.say(),/hello/);
+ const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.up();s.down();s.up();s.b.emit('click',{detail:1});s.tick(320);assert.match(s.say(),/hello/);
 });
 test('losing capture keeps the new position, and a sleeping tap still wakes',()=>{
  const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.b.emit('lostpointercapture',{pointerId:1});assert.equal(s.state(),'awake');assert.ok(!s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));
- const t=setup();t.tick(30400);t.down();t.up();t.b.emit('click',{detail:1});assert.equal(t.state(),'waking');
+ const t=setup();t.tick(30400);t.down();t.up();t.b.emit('click',{detail:1});t.tick(320);assert.equal(t.state(),'waking');
 });
 
 test('unrelated pointers cannot cancel an active drag',()=>{
@@ -285,4 +285,31 @@ test('the pointer left over offered grass does not interrupt the meal approach',
  s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});s.tick(1400);
  s.b.emit('pointerenter',{pointerType:'mouse'});s.move(71,34);s.tick(3000);
  assert.equal(s.state(),'feeding');
+});
+
+function doubleClickSheep(s) {
+ s.down();s.up();s.b.emit('click',{detail:1});s.tick(90);
+ s.down();s.up();s.b.emit('click',{detail:2});s.b.emit('dblclick',{button:0});
+}
+test('double-clicking the sheep alternates snack and head pat without extra greetings',()=>{
+ const s=setup();
+ for(const expected of ['feeding','petting','feeding','petting']) {
+   doubleClickSheep(s);assert.equal(s.state(),expected);
+   s.tick(400);assert.equal(s.state(),expected);
+   assert.doesNotMatch(s.say(),/hellos|three times|Nice to meet/);s.tick(4000);
+ }
+});
+test('direct feeding replaces a grazing trip and does not travel to stale grass',()=>{
+ const s=setup(false,false,true);s.tick(11000);doubleClickSheep(s);
+ assert.equal(s.state(),'feeding');assert.equal(s.get('.meadow-grass').hidden,true);
+ s.tick(4000);assert.equal(s.state(),'awake');
+});
+test('a cancelled or dragged pointer cannot trigger the double-click treat',()=>{
+ const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.up();
+ s.b.emit('click',{detail:2});s.b.emit('dblclick',{button:0});assert.equal(s.state(),'landing');
+ s.tick(600);doubleClickSheep(s);assert.equal(s.state(),'feeding');
+});
+test('a sleeping sheep accepts a double-click snack and reduced motion still accepts both treats',()=>{
+ const s=setup();s.tick(30400);doubleClickSheep(s);assert.equal(s.state(),'feeding');
+ const r=setup(true);doubleClickSheep(r);assert.equal(r.state(),'feeding');r.tick(4000);doubleClickSheep(r);assert.equal(r.state(),'petting');
 });
