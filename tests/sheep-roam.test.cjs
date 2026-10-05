@@ -8,7 +8,7 @@ function setup(width=1200,height=800){
   classList:{add:k=>classes.add(k),toggle:(k,on)=>on?classes.add(k):classes.delete(k)},contains:()=>false,
   getBoundingClientRect:()=>({left:600,top:130,width:82,height:92})};
  let obstacles=[],controls=[];
- const context={window:{},innerWidth:width,innerHeight:height,document:{querySelector:()=>({getBoundingClientRect:()=>({bottom:70})}),querySelectorAll:selector=>selector.startsWith('main ')?obstacles:controls},
+ const context={Math:Object.assign(Object.create(Math),{random:()=>.25}),window:{},innerWidth:width,innerHeight:height,document:{querySelector:()=>({getBoundingClientRect:()=>({bottom:70})}),querySelectorAll:selector=>selector.startsWith('main ')?obstacles:controls},
   addEventListener:(k,fn)=>listeners[k]=fn,removeEventListener:k=>delete listeners[k],
   requestAnimationFrame:fn=>{frames.set(++seq,fn);return seq},cancelAnimationFrame:id=>frames.delete(id)};
  vm.runInNewContext(fs.readFileSync(__dirname+'/../sheep-roam.js','utf8'),context);
@@ -47,4 +47,11 @@ test('a sheep initially overlapping content can move out instead of being trappe
 test('summoning arrives once; cancellation never reports arrival',()=>{
  const s=setup();let arrivals=0;s.pet.moveTo(600,400,()=>arrivals++);s.tick(0);s.tick(20000);assert.equal(arrivals,1);
  s.pet.moveTo(300,300,()=>arrivals++);s.tick(0);s.pet.stop();s.tick(20000);assert.equal(arrivals,1);
+});
+
+test('grass grows in reachable whitespace within the viewport',()=>{
+ const s=setup();const spot=s.pet.forageSpot();assert.ok(spot);assert.ok(spot.grassX>18&&spot.grassX<1200-18);assert.ok(spot.grassY<800);assert.ok(s.pet.clearRoute(spot.x,spot.y,[]));
+});
+test('no grass is planted when every candidate overlaps content',()=>{
+ const s=setup();s.obstacle({left:0,right:1200,top:0,bottom:800,width:1200,height:800});assert.equal(s.pet.forageSpot(),null);
 });

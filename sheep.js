@@ -32,7 +32,8 @@
   let stroke = null;
   let guide = null;
   let roamer = null;
-  let lastSnack = -Infinity;
+  const grass = document.querySelector('.meadow-grass');
+  let pasture = null, grazingTrip = false;
   const now = () => performance.now();
   const active = () => visible && !document.hidden;
   const resting = () => ['drowsy', 'yawning', 'sleeping'].includes(state);
@@ -60,6 +61,7 @@
   }
   function setState(next) {
     cancel('state'); cancel('blink'); cancel('idle'); cancel('reaction'); cancel('wander'); cancel('auto-wake');
+    if (state==='feeding' && next!=='feeding') clearGrass();
     roamer?.stop(); stopAnimations(); delete button.dataset.mood;
     state = next; button.dataset.state = next;
     mascot.follow = finePointer.matches && next === 'awake' && active();
@@ -82,7 +84,7 @@
   function scheduleWander(delay = 4000) {
     if (timers.has('wander') || !active() || motion.matches || state !== 'awake') return;
     later('wander', delay, () => {
-      if (!mascot.scripted && !guide?.isOpen()) roamer?.wander();
+      if (!mascot.scripted && !guide?.isOpen()) { if (pasture) visitGrass(); else roamer?.wander(); }
       // Retry after blocked routes or an overlapping blink; a single miss cannot strand it.
       scheduleWander(6500);
     });
@@ -93,23 +95,59 @@
     scheduleWander();
     later('idle', 20000, () => {
       if (guide?.isOpen()) { idleLater(); return; }
-      if (now() - lastSnack >= 90000) { snack(); return; }
+      if (pasture) { visitGrass(); idleLater(); return; }
       setState('drowsy'); play('drowsy');
       later('state', 4000, yawnAndSleep);
     });
   }
+  function scheduleGrass(delay=22000+Math.random()*16000) {
+    if (!grass || timers.has('grow-grass') || pasture || !active() || motion.matches) return;
+    later('grow-grass',delay,growGrass);
+  }
+  function clearGrass() {
+    if (grazingTrip) roamer?.stop();
+    pasture=null; grazingTrip=false;
+    cancel('grass-expire'); cancel('grass-bite'); cancel('grass-visit');
+    if (grass) { grass.hidden=true; delete grass.dataset.eaten; }
+  }
+  function growGrass() {
+    if (state!=='awake' || guide?.isOpen() || !roamer || now()-lastClick<4000) { scheduleGrass(6000); return; }
+    // Food may interrupt an idle walk, but never a user gesture or a project note.
+    if (roamer.moving) roamer.stop();
+    const spot=roamer.forageSpot();
+    if (!spot) { scheduleGrass(6000); return; }
+    pasture=spot; grass.style.setProperty('--grass-left',spot.grassX+'px');
+    grass.style.setProperty('--grass-top',spot.grassY+'px');
+    grass.hidden=false; delete grass.dataset.eaten;
+    later('grass-expire',45000,()=>{clearGrass();scheduleGrass();});
+    // Let the blades grow before the sheep notices them.
+    later('grass-visit',1400,visitGrass);
+  }
+  function visitGrass() {
+    if (!pasture || grazingTrip || state!=='awake' || guide?.isOpen() || mascot.scripted || !roamer.options.canMove()) return;
+    const target=pasture;
+    const controls=[...document.querySelectorAll('a,button,input,summary')].filter(el=>!root.contains(el))
+      .flatMap(el=>[...el.getClientRects()]);
+    if (!roamer.clearRoute(target.x,target.y,controls)) {clearGrass();scheduleGrass();return;}
+    grazingTrip=true;
+    roamer.moveTo(target.x,target.y,()=>{
+      if (pasture!==target || state!=='awake') return;
+      snack();
+    });
+  }
   function snack() {
     if (state !== 'awake') return;
-    lastSnack = now(); setState('feeding');
+    setState('feeding');
+    if (pasture) later('grass-bite',1300,()=>{if(grass) grass.dataset.eaten='true';});
     // Passive reactions are visual; no unsolicited screen-reader announcement.
-    play('eat', awake);
+    play('eat', () => {clearGrass();awake();scheduleGrass();});
   }
   function awake() {
-    setState('awake'); play('rest'); scheduleBlink(); idleLater();
+    setState('awake'); play('rest'); scheduleBlink(); idleLater();scheduleGrass();
   }
   function engage() {
     engaged = true;
-    if (state === 'awake') { idleLater(); scheduleBlink(); }
+    if (state === 'awake') { idleLater(); scheduleBlink(); scheduleGrass(); }
   }
   function yawnAndSleep() {
     setState('yawning');
@@ -172,7 +210,7 @@
     }
   }
   function quiet() {
-    roamer?.stop(); guide?.pause();
+    roamer?.stop(); clearGrass(); guide?.pause();
     releasePress(true);
     timers.forEach(clearTimeout); timers.clear();
     cancelAnimationFrame(frame); frame = 0; point = null; stroke = null;
@@ -287,10 +325,13 @@
     canMove: () => active() && !motion.matches && state === 'awake' && !press && !guide?.isOpen()
       && !root.querySelector(':focus-visible'),
     walk: walking,
-    rest: () => { stopAnimations(); play('rest'); },
+    rest: () => { grazingTrip=false; stopAnimations(); play('rest'); },
     arrive: () => { speak('Here I am. What are we reading?',true); hop(); }
 
   });
+  cancel('grow-grass');scheduleGrass(9000+Math.random()*3000);
+  addEventListener('scroll',()=>{if(pasture)clearGrass();scheduleGrass(8000);},{passive:true});
+  addEventListener('resize',()=>{if(pasture)clearGrass();scheduleGrass(8000);});
   // Double-click only genuine empty space; text selection and real controls keep their meaning.
   document.addEventListener('dblclick', event => {
     const target=event.target;

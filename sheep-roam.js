@@ -79,6 +79,23 @@
       const target=candidates[Math.floor(Math.random()*candidates.length)];
       this.moveTo(target.x,target.y);return true;
     }
+    forageSpot() {
+      if(!this.options.canMove() || this.moving)return null;
+      const b=this.bounds(),obstacles=this.obstacles();
+      const controls=[...document.querySelectorAll('a,button,input,summary')].filter(el=>!this.root.contains(el))
+        .flatMap(el=>[...el.getClientRects()]);
+      for(let i=0;i<70;i++) {
+        const x=Math.max(8,Math.min(innerWidth-b.width-8,this.x+(Math.random()-.5)*650));
+        const y=Math.max(b.top,Math.min(innerHeight-b.height-12,this.y+(Math.random()-.5)*440));
+        const distance=Math.hypot(x-this.x,y-this.y);
+        if(distance<65 || distance>380 || !this.clearRoute(x,y,controls))continue;
+        const grassX=x+b.width*(x<this.x ? .29 : .71),grassY=y+b.height*.76;
+        // The grass itself must sit in actual whitespace, including on narrow screens.
+        if(obstacles.some(r=>grassX-18<r.right+6 && grassX+18>r.left-6 && grassY-26<r.bottom+6 && grassY+3>r.top-6))continue;
+        return {x,y,grassX,grassY};
+      }
+      return null;
+    }
     approach(pointerX,pointerY) {
       if(!this.options.canMove())return false;
       const b=this.bounds();

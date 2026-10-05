@@ -4,12 +4,12 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
-function setup(reduced = false, withGuide = false) {
+function setup(reduced = false, withGuide = false, withGrass = false) {
   let time = 100000, sequence = 0, animationCount = 0, observer;
   const jobs = new Map(), elements = new Map();
   class Element {
     constructor() { this.dataset = {}; this.style = {setProperty:(k,v) => { this.style[k]=v; }}; this.listeners = {}; this.textContent=''; this.open=false; const classes=new Set();this.classList={contains:k=>classes.has(k),toggle:(k,on)=>{if(on)classes.add(k);else classes.delete(k);}}; }
-    querySelector(q) { return get(q); }
+    querySelector(q) { if(q===':focus-visible' || (q==='.meadow-grass'&&!withGrass))return null;return get(q); }
     querySelectorAll(q) { return q === '[data-sheep-action]' ? actions : []; }
     addEventListener(k,fn) { (this.listeners[k] ||= []).push(fn); }
     removeEventListener(k,fn) { this.listeners[k]=(this.listeners[k]||[]).filter(f=>f!==fn); }
@@ -47,9 +47,19 @@ function setup(reduced = false, withGuide = false) {
     lookAt(x,y){calls.push(['look',x,y]);}
     play(name){this.stop();calls.push(['play',name]);this.scripted=true;return {then:fn=>{this.pending=timeout(()=>{this.scripted=false;fn();},this.data.sequences[name].frames.reduce((n,f)=>n+f[1],0));}};}
   };
-  window.SheepRoam=class {constructor(){this.x=400;this.y=300;}stop(){} place(x,y){this.x=x;this.y=y;calls.push(['place',x,y]);} approach(x,y){calls.push(['approach',x,y]);return true;} wander(){calls.push(['roam']);return false;}};
+  window.SheepRoam=class {
+    constructor(root,options){this.x=400;this.y=300;this.options=options;}
+    stop(){clearTimeoutMock(this.trip);if(this.moving){this.moving=false;this.options.rest();}}
+    place(x,y){this.x=x;this.y=y;calls.push(['place',x,y]);}
+    approach(x,y){calls.push(['approach',x,y]);return true;}
+    forageSpot(){return withGrass?{x:200,y:300,grassX:220,grassY:370}:null;}
+    clearRoute(){return true;}
+    moveTo(x,y,arrive){this.stop();this.moving=true;calls.push(['grass-trip',x,y]);this.options.walk();this.trip=timeout(()=>{this.stop();arrive();},3000);}
+    wander(){calls.push(['roam']);return false;}
+  };
+
   const clearTimeoutMock=id=>jobs.delete(id);
-  const ctx={innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
+  const ctx={Math:Object.assign(Object.create(Math),{random:()=>0}),innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
     setTimeout:timeout,clearTimeout:id=>jobs.delete(id),requestAnimationFrame:fn=>timeout(fn,0),cancelAnimationFrame:id=>jobs.delete(id),
     addEventListener:window.addEventListener.bind(window),IntersectionObserver:class{constructor(fn){observer=fn;}observe(){}},console};
   ctx.window=window; window.IntersectionObserver=ctx.IntersectionObserver;
@@ -83,11 +93,8 @@ test('head stroking needs reversals and duration; ordinary passing does not pet'
 test('quick taps give head pats, including keyboard activation',()=>{
  const s=setup();s.click();s.tick(150);s.click();assert.equal(s.state(),'petting');assert.match(s.say(),/Thank ewe/);s.tick(2800);assert.equal(s.state(),'awake');
 });
-test('idle explores, snacks once, then sleeps; focus does not wake it',()=>{
- const s=setup();s.tick(8000);assert.ok(s.calls.some(c=>c[0]==='roam'));
- s.tick(12000);assert.equal(s.state(),'feeding');assert.equal(s.say(),'');
- s.tick(2820);assert.equal(s.state(),'awake');
- s.tick(20000);assert.equal(s.state(),'drowsy');s.tick(4000);assert.equal(s.state(),'yawning');s.tick(6400);assert.equal(s.state(),'sleeping');
+test('without grass, idle becomes sleepy instead of eating invisible food',()=>{
+ const s=setup();s.tick(20000);assert.equal(s.state(),'drowsy');s.tick(4000);assert.equal(s.state(),'yawning');s.tick(6400);assert.equal(s.state(),'sleeping');
  s.b.emit('focus');assert.equal(s.state(),'sleeping');s.click();assert.equal(s.state(),'waking');s.tick(2750);assert.equal(s.state(),'awake');
 });
 test('pointer activity postpones passive snacks and sleep',()=>{
@@ -100,7 +107,7 @@ test('reduced motion skips idle glancing and automatic blinking',()=>{
  const s=setup(true);s.tick(19000);assert.ok(!s.calls.some(c=>['turn','blink'].includes(c[1])));s.click();assert.ok(s.say());assert.equal(s.animations(),0);
 });
 test('changing motion preference cancels feeding and pending callbacks',()=>{
- const s=setup();s.tick(20000);assert.equal(s.state(),'feeding');s.motion.matches=true;s.motion.emit('change');assert.equal(s.state(),'awake');assert.equal(s.jobs.size,0);
+ const s=setup(false,false,true);s.tick(13400);assert.equal(s.state(),'feeding');s.motion.matches=true;s.motion.emit('change');assert.equal(s.state(),'awake');assert.equal(s.jobs.size,0);
 });
 
 test('project guide docks, waits for reading, and returns home without moving focus to a note',()=>{
@@ -148,7 +155,7 @@ test('Play menu is absent; reading-note preference remains in the guide',()=>{
 });
 
 test('an intentional click interrupts passive grazing immediately',()=>{
- const s=setup();s.tick(20000);assert.equal(s.state(),'feeding');s.click();assert.equal(s.state(),'awake');assert.match(s.say(),/hello/);s.tick(3000);assert.equal(s.state(),'awake');
+ const s=setup(false,false,true);s.tick(13400);assert.equal(s.state(),'feeding');s.click();assert.equal(s.state(),'awake');assert.match(s.say(),/hello/);s.tick(3000);assert.equal(s.state(),'awake');
 });
 
 test('blocked roaming retries without requiring a new interaction',()=>{
@@ -158,7 +165,7 @@ test('movement elsewhere on the page does not reset exploration',()=>{
  const s=setup();for(let i=0;i<4;i++){s.tick(1000);s.move(300,100);s.tick(0);}assert.ok(s.calls.some(c=>c[0]==='roam'));
 });
 test('a short nap ends automatically and exploration resumes',()=>{
- const s=setup();s.tick(20000+2820+20000+4000+6400);assert.equal(s.state(),'sleeping');s.tick(16000);assert.equal(s.state(),'waking');s.tick(2750);assert.equal(s.state(),'awake');const n=s.calls.filter(c=>c[0]==='roam').length;s.tick(4000);assert.equal(s.calls.filter(c=>c[0]==='roam').length,n+1);
+ const s=setup();s.tick(20000+4000+6400);assert.equal(s.state(),'sleeping');s.tick(16000);assert.equal(s.state(),'waking');s.tick(2750);assert.equal(s.state(),'awake');const n=s.calls.filter(c=>c[0]==='roam').length;s.tick(4000);assert.equal(s.calls.filter(c=>c[0]==='roam').length,n+1);
 });
 
 test('dragging moves the sheep and drops with a landing, without a second click',()=>{
@@ -179,4 +186,21 @@ test('blank-space double click summons; controls and text selection do not',()=>
 });
 test('page-end celebration happens once and stays quiet for screen readers',()=>{
  const s=setup();s.get('footer').rect={bottom:780};s.window.emit('scroll');s.tick(1800);assert.match(s.get('.sheep-bubble').textContent,/standing ovation/);assert.equal(s.say(),'');const n=s.calls.filter(c=>c[1]==='hop').length;s.window.emit('scroll');s.tick(2000);assert.equal(s.calls.filter(c=>c[1]==='hop').length,n);
+});
+
+test('grass sprouts, is approached, then disappears only while eating',()=>{
+ const s=setup(false,false,true);s.tick(9000);assert.equal(s.get('.meadow-grass').hidden,false);assert.ok(!s.calls.some(c=>c[0]==='grass-trip'));
+ s.tick(1400);assert.ok(s.calls.some(c=>c[0]==='grass-trip'));assert.equal(s.state(),'awake');
+ s.tick(3000);assert.equal(s.state(),'feeding');s.tick(1300);assert.equal(s.get('.meadow-grass').dataset.eaten,'true');
+ s.tick(1520);assert.equal(s.get('.meadow-grass').hidden,true);assert.equal(s.state(),'awake');
+});
+test('an interrupted grass trip cannot trigger eating at the wrong position',()=>{
+ const s=setup(false,false,true);s.tick(11000);s.click();s.tick(3000);assert.equal(s.state(),'awake');assert.ok(!s.calls.some(c=>c[1]==='eat'));assert.equal(s.get('.meadow-grass').hidden,false);
+});
+test('scrolling removes stale grass and cancels an unfinished trip',()=>{
+ const s=setup(false,false,true);s.tick(9000);s.window.emit('scroll');s.tick(5000);assert.equal(s.get('.meadow-grass').hidden,true);assert.ok(!s.calls.some(c=>c[1]==='eat'));
+});
+test('hidden tabs and reduced motion do not leave active grass behind',()=>{
+ const s=setup(false,false,true);s.tick(9000);s.hidden();assert.equal(s.get('.meadow-grass').hidden,true);assert.equal(s.jobs.size,0);
+ const r=setup(true,false,true);r.tick(15000);assert.ok(!r.calls.some(c=>c[0]==='grass-trip'));
 });
