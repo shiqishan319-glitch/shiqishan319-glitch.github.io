@@ -7,7 +7,7 @@
   const svg = button.querySelector('svg');
   const motionData = JSON.parse(document.querySelector('#sheep-motion-data').textContent);
   // Short transitions share the same gaze-preserving controller as the full actions.
-  for (const [name,id] of [['rest','idle'],['drowsy','drowsy'],['press','crouch']]) {
+  for (const [name,id] of [['rest','idle'],['drowsy','drowsy'],['press','crouch'],['carry','air'],['land','land']]) {
     motionData.sequences[name] = {frames:[[id,300]]};
   }
   const mascot = new window.BUSheep(svg, motionData);
@@ -65,7 +65,7 @@
     mascot.follow = finePointer.matches && next === 'awake' && active();
     button.toggleAttribute('data-sleeping', next === 'sleeping');
     caption.textContent = ({sleeping:'Daydreaming…',drowsy:'Getting sleepy',yawning:'A tiny yawn',
-      petting:'More head pats?',feeding:'Nom, nom',pressed:'Soft little sheep',waking:'Oh, hello again'}[next] || 'Say hello');
+      landing:'Back on my hooves',petting:'More head pats?',feeding:'Nom, nom',pressed:'Soft little sheep',waking:'Oh, hello again'}[next] || 'Say hello');
   }
   function speak(text, announce = false) {
     bubble.textContent = text; button.dataset.talking = 'true';
@@ -161,9 +161,14 @@
     if (!press) return;
     const prior = press; press = null; cancel('hold');
     if (button.hasPointerCapture(prior.id)) button.releasePointerCapture(prior.id);
-    if (prior.held || cancelled) skipPointerClickUntil = now() + 500;
+    delete button.dataset.carried;
+    if (prior.dragging && cancelled) roamer.place(prior.originX,prior.originY);
+    if (prior.dragging || prior.held || cancelled) skipPointerClickUntil = now() + 500;
     if (state === 'pressed') {
-      if (prior.held && !cancelled) bounce(); else awake();
+      if (prior.dragging && !cancelled) {
+        setState('landing'); play('land',awake);
+        speak('A new little spot. Thank ewe.',true);
+      } else if (prior.held && !cancelled) bounce(); else awake();
     }
   }
   function quiet() {
@@ -183,10 +188,21 @@
   button.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0 || press || resting() || state === 'waking') return;
     guide?.interacted();
-    engage(); press = {id:event.pointerId, held:false};
+    engage(); press = {id:event.pointerId, held:false,dragging:false,
+      x:event.clientX,y:event.clientY,originX:roamer.x,originY:roamer.y};
     button.setPointerCapture(event.pointerId);
     setState('pressed'); play('press');
     later('hold', 400, () => { if (press) press.held = true; });
+  });
+  button.addEventListener('pointermove', event => {
+    if (!press || press.id !== event.pointerId) return;
+    const dx=event.clientX-press.x,dy=event.clientY-press.y;
+    if (!press.dragging && Math.hypot(dx,dy)<12) return;
+    if (!press.dragging) {
+      press.dragging=true; cancel('hold'); button.dataset.carried='true';
+      play('carry');
+    }
+    roamer.place(press.originX+dx,press.originY+dy);
   });
   button.addEventListener('pointerup', event => { if (press?.id === event.pointerId) releasePress(); });
   button.addEventListener('pointercancel', () => releasePress(true));
@@ -271,8 +287,34 @@
     canMove: () => active() && !motion.matches && state === 'awake' && !press && !guide?.isOpen()
       && !root.querySelector(':focus-visible'),
     walk: walking,
-    rest: () => { stopAnimations(); play('rest'); }
+    rest: () => { stopAnimations(); play('rest'); },
+    arrive: () => { speak('Here I am. What are we reading?',true); hop(); }
+
   });
+  // Double-click only genuine empty space; text selection and real controls keep their meaning.
+  document.addEventListener('dblclick', event => {
+    const target=event.target;
+    if (event.button!==0 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
+      || root.contains(target) || !target.matches('body,main,section,article,div')
+      || target.closest('a,button,input,textarea,select,summary,[contenteditable],header,nav,footer')
+      || window.getSelection()?.toString().trim()) return;
+    guide?.interacted(); engaged=true; awake();
+    if (!roamer.approach(event.clientX,event.clientY)) {
+      speak(motion.matches ? 'Right here with ewe.' : 'I’ll wave from here. That path is a little busy.',true); nod();
+    } else speak('Coming over. Tiny legs, big effort.',true);
+  });
+  let finishedReading=false;
+  addEventListener('scroll', () => {
+    cancel('reading-end');
+    const footer=document.querySelector('footer');
+    if (finishedReading || !footer || footer.getBoundingClientRect().bottom>innerHeight+10) return;
+    later('reading-end',1800,()=>{
+      if (finishedReading || footer.getBoundingClientRect().bottom>innerHeight+10 || press
+        || guide?.isOpen() || state!=='awake') return;
+      finishedReading=true; awake();
+      speak('You made it to the end. A tiny standing ovation.');hop();
+    });
+  },{passive:true});
   function setupProjectGuide() {
     let data;
     try { data = JSON.parse(document.querySelector('#sheep-guide-data')?.textContent || '[]'); }
@@ -327,7 +369,7 @@
       const delay = Math.max(1000, lastAuto + 10000 - now(), holdUntil - now());
       later('guide-open', delay, () => {
         if (!automatic || current?.id !== id || seen.has(id)) return;
-        if (['pressed','petting','feeding','waking'].includes(state)) {
+        if (['pressed','petting','feeding','waking','landing'].includes(state)) {
           holdUntil = now() + 1200; scheduleNote(); return;
         }
         show();

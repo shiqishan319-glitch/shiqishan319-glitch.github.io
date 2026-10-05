@@ -142,3 +142,8 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 @media(prefers-reduced-motion:reduce){.is-free .sheep-caption{transition:none}}
 
 .is-free .sheep-button .sheep-bubble,.is-free.speech-right .sheep-button .sheep-bubble{left:var(--speech-x);right:auto}
+
+/* Dragging only captures gestures that begin on the pet itself. */
+.is-free .sheep-button{touch-action:none;cursor:grab}
+.is-free .sheep-button[data-carried]{cursor:grabbing}
+.is-free .sheep-button[data-carried] .sheep-caption{opacity:0}

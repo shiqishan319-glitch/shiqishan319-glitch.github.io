@@ -43,3 +43,8 @@ test('a medium-width panel can use the lower edge when text blocks the gutter',(
 test('a sheep initially overlapping content can move out instead of being trapped',()=>{
  const s=setup();s.pet.place(100,300);const obstacle={left:100,right:200,top:290,bottom:330};assert.equal(s.pet.clearRoute(100,450,[obstacle]),true);assert.equal(s.pet.clearRoute(100,301,[obstacle]),false);
 });
+
+test('summoning arrives once; cancellation never reports arrival',()=>{
+ const s=setup();let arrivals=0;s.pet.moveTo(600,400,()=>arrivals++);s.tick(0);s.tick(20000);assert.equal(arrivals,1);
+ s.pet.moveTo(300,300,()=>arrivals++);s.tick(0);s.pet.stop();s.tick(20000);assert.equal(arrivals,1);
+});

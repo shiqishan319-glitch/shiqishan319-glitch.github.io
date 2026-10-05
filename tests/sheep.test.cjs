@@ -33,7 +33,8 @@ function setup(reduced = false, withGuide = false) {
     get('#alpha').rect={top:700,bottom:1100};get('#beta').rect={top:1200,bottom:1600};
     get('.sheep-guide-card').hidden=true;
   }
-  const window = new Element();
+  get('footer').rect={bottom:5000};
+  const window = new Element(); window.getSelection=()=>({toString:()=>''});
   const motion = new Element(); motion.matches=reduced;
   const fine = new Element(); fine.matches=true;
   const timeout=(fn,ms=0)=>{const id=++sequence;jobs.set(id,{fn,at:time+ms});return id;};
@@ -46,7 +47,7 @@ function setup(reduced = false, withGuide = false) {
     lookAt(x,y){calls.push(['look',x,y]);}
     play(name){this.stop();calls.push(['play',name]);this.scripted=true;return {then:fn=>{this.pending=timeout(()=>{this.scripted=false;fn();},this.data.sequences[name].frames.reduce((n,f)=>n+f[1],0));}};}
   };
-  window.SheepRoam=class {stop(){} wander(){calls.push(['roam']);return false;}};
+  window.SheepRoam=class {constructor(){this.x=400;this.y=300;}stop(){} place(x,y){this.x=x;this.y=y;calls.push(['place',x,y]);} approach(x,y){calls.push(['approach',x,y]);return true;} wander(){calls.push(['roam']);return false;}};
   const clearTimeoutMock=id=>jobs.delete(id);
   const ctx={innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
     setTimeout:timeout,clearTimeout:id=>jobs.delete(id),requestAnimationFrame:fn=>timeout(fn,0),cancelAnimationFrame:id=>jobs.delete(id),
@@ -158,4 +159,24 @@ test('movement elsewhere on the page does not reset exploration',()=>{
 });
 test('a short nap ends automatically and exploration resumes',()=>{
  const s=setup();s.tick(20000+2820+20000+4000+6400);assert.equal(s.state(),'sleeping');s.tick(16000);assert.equal(s.state(),'waking');s.tick(2750);assert.equal(s.state(),'awake');const n=s.calls.filter(c=>c[0]==='roam').length;s.tick(4000);assert.equal(s.calls.filter(c=>c[0]==='roam').length,n+1);
+});
+
+test('dragging moves the sheep and drops with a landing, without a second click',()=>{
+ const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});
+ s.b.emit('pointermove',{pointerId:1,clientX:520,clientY:350});assert.equal(s.b.dataset.carried,'true');assert.deepEqual(s.calls.at(-1),['place',500,330]);
+ s.up();assert.equal(s.state(),'landing');s.b.emit('click',{detail:1});assert.equal(s.state(),'landing');s.tick(300);assert.equal(s.state(),'awake');
+});
+test('cancelled dragging returns to its original position',()=>{
+ const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:520,clientY:350});s.b.emit('pointercancel');assert.ok(s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));assert.equal(s.b.dataset.carried,undefined);
+});
+test('small pointer jitter preserves a normal click',()=>{
+ const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:422,clientY:324});s.up();s.b.emit('click',{detail:1});assert.match(s.say(),/hello/);assert.ok(!s.calls.some(c=>c[0]==='place'));
+});
+test('blank-space double click summons; controls and text selection do not',()=>{
+ const s=setup();const target={matches:()=>true,closest:()=>null};s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});assert.ok(s.calls.some(c=>c[0]==='approach'));
+ const n=s.calls.filter(c=>c[0]==='approach').length;target.closest=()=>({});s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});assert.equal(s.calls.filter(c=>c[0]==='approach').length,n);
+ target.closest=()=>null;s.window.getSelection=()=>({toString:()=> 'selected text'});s.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});assert.equal(s.calls.filter(c=>c[0]==='approach').length,n);
+});
+test('page-end celebration happens once and stays quiet for screen readers',()=>{
+ const s=setup();s.get('footer').rect={bottom:780};s.window.emit('scroll');s.tick(1800);assert.match(s.get('.sheep-bubble').textContent,/standing ovation/);assert.equal(s.say(),'');const n=s.calls.filter(c=>c[1]==='hop').length;s.window.emit('scroll');s.tick(2000);assert.equal(s.calls.filter(c=>c[1]==='hop').length,n);
 });

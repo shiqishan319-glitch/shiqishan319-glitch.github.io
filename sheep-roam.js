@@ -79,11 +79,24 @@
       const target=candidates[Math.floor(Math.random()*candidates.length)];
       this.moveTo(target.x,target.y);return true;
     }
-    moveTo(x,y) {
+    approach(pointerX,pointerY) {
+      if(!this.options.canMove())return false;
+      const b=this.bounds();
+      const controls=[...document.querySelectorAll('a,button,input,summary')].filter(el=>!this.root.contains(el))
+        .flatMap(el=>[...el.getClientRects()]);
+      for(const [dx,dy] of [[-b.width/2,-b.height+12],[-b.width/2,8],[16,-b.height/2],[-b.width-16,-b.height/2]]) {
+        const x=Math.max(8,Math.min(innerWidth-b.width-8,pointerX+dx));
+        const y=Math.max(b.top,Math.min(innerHeight-b.height-12,pointerY+dy));
+        if(!this.clearRoute(x,y,controls))continue;
+        this.moveTo(x,y,()=>this.options.arrive?.());return true;
+      }
+      return false;
+    }
+    moveTo(x,y,arrive) {
       this.stop();
       const startX=this.x,startY=this.y,distance=Math.hypot(x-startX,y-startY);
       this.direction=x<startX?-1:1;this.moving=true;this.root.dataset.moving='true';
-      const duration=Math.max(1200,distance/45*1000);let start=null;
+      const duration=arrive ? Math.max(1200,Math.min(10000,distance/65*1000)) : Math.max(1200,distance/45*1000);let start=null;
       this.options.walk();
       const tick=time=>{
         if(!this.moving)return;
@@ -91,7 +104,7 @@
         if(start===null)start=time;
         const t=Math.min(1,(time-start)/duration),e=t*t*(3-2*t);
         this.place(startX+(x-startX)*e,startY+(y-startY)*e);
-        if(t<1)this.raf=requestAnimationFrame(tick);else this.stop();
+        if(t<1)this.raf=requestAnimationFrame(tick);else {this.stop();arrive?.();}
       };
       this.raf=requestAnimationFrame(tick);
     }
