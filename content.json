@@ -171,5 +171,70 @@
     ]
   ],
   "cv": "assets/Qishan-Shi-CV.pdf",
-  "linkedin": "https://www.linkedin.com/in/qishan-shi-373b38298/"
+  "linkedin": "https://www.linkedin.com/in/qishan-shi-373b38298/",
+  "sheepGuide": [
+    {
+      "id": "agent-teams",
+      "title": "Qwen · Agent Teams",
+      "notes": [
+        "This project connects reusable creative Skills with a way to evaluate how well they work.",
+        "Each Skill gets relevant test instructions. Model and tool conditions stay fixed within each comparison, so changes in output can be investigated.",
+        "The internal platform covers 100+ Skills and their versions. The work also includes context compression and adapting existing Skills to new models."
+      ]
+    },
+    {
+      "id": "overseas-product",
+      "title": "Qwen · Overseas exploration",
+      "notes": [
+        "Here, product evaluation meets market research: what can the Agent do well, and where is there demand?",
+        "Qishan participated in overseas marketing evaluations and wrote the report on intent, scripts, visuals and editing.",
+        "Search-demand research helped prioritize background removal and face swap. Website work here concerns planning feature and scenario pages."
+      ]
+    },
+    {
+      "id": "creator-platform",
+      "title": "Xiaohongshu · Creator products",
+      "notes": [
+        "This work helps brands find suitable creators and makes collaboration easier.",
+        "Creator labels and semantic matching broadened discovery. The search experiment showed 21% click-through versus 18% in the control.",
+        "The work also covered collaboration features and creator activities, helping 400+ creators receive their first brand deal."
+      ]
+    },
+    {
+      "id": "publicis",
+      "title": "Publicis · Client campaigns",
+      "notes": [
+        "This is where understanding audience habits turns into practical campaign decisions.",
+        "For Changi Airport, mobile-platform and shopping behavior informed a proposal for platform-based digital touchpoints.",
+        "For Pepsi, creator assessments, script reviews and collaboration-process improvements helped raise script approval rates."
+      ]
+    },
+    {
+      "id": "creator-assistant",
+      "title": "Personal · Creator assistant",
+      "notes": [
+        "This personal project grew from a creator’s own question: how do you turn a few successful posts into a repeatable approach?",
+        "Account history and reader feedback inform diagnosis and topic ideas. Multiple agents simulate different audience perspectives and summarize feedback.",
+        "The assistant was applied to 50+ posts, with average readership increasing by approximately 18%."
+      ]
+    },
+    {
+      "id": "china-open",
+      "title": "China Open · Content operations",
+      "notes": [
+        "A different kind of product context: creating useful content in a live international sporting event.",
+        "Qishan interviewed players in English and handled planning, interviews, editing and publishing across social platforms.",
+        "The work produced 60+ social posts, with a news-center operations team Gold Award in the top 5%."
+      ]
+    },
+    {
+      "id": "competition-awards",
+      "title": "Creative competitions",
+      "notes": [
+        "These awards add a hands-on creative side to the product work.",
+        "The cultural-design project used Stable Diffusion for visual assets, with ControlNet for finer control over the results.",
+        "It received First Prize in the Beijing Cultural and Creative Design Competition. The other awards are listed alongside it."
+      ]
+    }
+  ]
 }

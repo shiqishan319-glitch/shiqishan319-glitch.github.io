@@ -4,19 +4,20 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
-function setup(reduced = false) {
+function setup(reduced = false, withGuide = false) {
   let time = 100000, sequence = 0, animationCount = 0, observer;
   const jobs = new Map(), elements = new Map();
   class Element {
-    constructor() { this.dataset = {}; this.style = {setProperty:(k,v) => { this.style[k]=v; }}; this.listeners = {}; this.textContent=''; this.open=false; }
+    constructor() { this.dataset = {}; this.style = {setProperty:(k,v) => { this.style[k]=v; }}; this.listeners = {}; this.textContent=''; this.open=false; const classes=new Set();this.classList={contains:k=>classes.has(k),toggle:(k,on)=>{if(on)classes.add(k);else classes.delete(k);}}; }
     querySelector(q) { return get(q); }
     querySelectorAll(q) { return q === '[data-sheep-action]' ? actions : []; }
     addEventListener(k,fn) { (this.listeners[k] ||= []).push(fn); }
     emit(k,event={}) { for(const fn of this.listeners[k]||[]) fn({target:this,preventDefault(){},...event}); }
     toggleAttribute(k,on) { const key=k.replace(/^data-/, ''); if(on)this.dataset[key]='';else delete this.dataset[key]; }
     contains(el) { return [...elements.values()].includes(el); }
+    setAttribute(k,v) { this[k]=v; }
     focus() { this.emit('focus'); }
-    getBoundingClientRect() { return {left:0,top:0,width:96,height:76}; }
+    getBoundingClientRect() { return this.rect || {left:0,top:0,bottom:76,width:96,height:76}; }
     setPointerCapture(id) { this.capture=id; }
     hasPointerCapture(id) { return this.capture===id; }
     releasePointerCapture() { delete this.capture; }
@@ -24,25 +25,37 @@ function setup(reduced = false) {
   }
   const get=q=>{if(!elements.has(q)) elements.set(q,new Element());return elements.get(q);};
   const actions=['pat','feed','nap'].map(kind=>{const e=get(`[data-sheep-action="${kind}"]`);e.dataset.sheepAction=kind;return e;});
-  const doc = new Element(); doc.hidden=false;
+  const doc = new Element(); doc.hidden=false; doc.getElementById=id=>get('#'+id);
+  if(withGuide){
+    get('#sheep-guide-data').textContent=JSON.stringify(['alpha','beta'].map(id=>({id,title:id+' project',notes:[id+' overview',id+' method',id+' result']})));
+    get('.header-shell').rect={bottom:70};get('.hero').rect={bottom:500};
+    get('#alpha').rect={top:700,bottom:1100};get('#beta').rect={top:1200,bottom:1600};
+    get('.sheep-guide-card').hidden=true;
+  }
   const window = new Element();
   const motion = new Element(); motion.matches=reduced;
   const fine = new Element(); fine.matches=true;
   const timeout=(fn,ms=0)=>{const id=++sequence;jobs.set(id,{fn,at:time+ms});return id;};
-  const ctx={document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
+  const ctx={innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
     setTimeout:timeout,clearTimeout:id=>jobs.delete(id),requestAnimationFrame:fn=>timeout(fn,0),cancelAnimationFrame:id=>jobs.delete(id),
     addEventListener:window.addEventListener.bind(window),IntersectionObserver:class{constructor(fn){observer=fn;}observe(){}},console};
   ctx.window=window; window.IntersectionObserver=ctx.IntersectionObserver;
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../sheep.js'),'utf8'),ctx);
   function tick(ms) {const end=time+ms; let safety=0; while(true){const due=[...jobs].filter(([,j])=>j.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;if(++safety>1000)throw Error('Runaway timer');time=due[1].at;jobs.delete(due[0]);due[1].fn();}time=end;}
   const b=get('.sheep-button');
-  return {get,b,doc,window,motion,tick,jobs,actions,state:()=>b.dataset.state,
+  function project(id) {
+    get('.hero').rect={bottom:-100};
+    get('#alpha').rect=id==='alpha'?{top:100,bottom:650}:{top:-800,bottom:-100};
+    get('#beta').rect=id==='beta'?{top:100,bottom:650}:{top:900,bottom:1300};
+    window.emit('scroll');tick(0);
+  }
+  return {project,get,b,doc,window,motion,tick,jobs,actions,state:()=>b.dataset.state,
     say:()=>get('.sheep-status').textContent,animations:()=>animationCount,
     hidden:()=>{doc.hidden=true;doc.emit('visibilitychange');},offscreen:()=>observer([{isIntersecting:false}]),
     click:()=>b.emit('click',{detail:0}),
     down:()=>b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1}),
     up:()=>b.emit('pointerup',{pointerId:1}),
-    move:(x,y)=>get('.hero').emit('pointermove',{pointerType:'mouse',buttons:0,clientX:x,clientY:y})};
+    move:(x,y)=>doc.emit('pointermove',{pointerType:'mouse',buttons:0,clientX:x,clientY:y})};
 }
 test('clicks count once; third hello unlocks the count-a-sheep line',()=>{
  const s=setup();for(let i=0;i<3;i++){s.down();s.tick(50);s.up();s.b.emit('click',{detail:1});s.tick(700);}assert.match(s.say(),/three times/);
@@ -71,4 +84,33 @@ test('reduced motion preserves all accessible state feedback with no WAAPI anima
 });
 test('changing motion preference cancels in-flight feeding and pending callbacks',()=>{
  const s=setup();s.actions[1].emit('click');s.motion.matches=true;s.motion.emit('change');assert.equal(s.state(),'awake');assert.equal(s.actions[1].disabled,false);assert.equal(s.jobs.size,0);
+});
+
+test('project guide docks, waits for reading, and returns home without moving focus to a note',()=>{
+ const s=setup(false,true);const root=s.get('.sheep-companion'),card=s.get('.sheep-guide-card');
+ assert.equal(root.classList.contains('is-docked'),false);s.project('alpha');assert.equal(root.classList.contains('is-docked'),true);assert.equal(card.hidden,true);
+ s.tick(1000);assert.equal(card.hidden,false);assert.equal(s.get('.sheep-guide-text').textContent,'alpha overview');assert.equal(s.say(),'');
+ s.get('.hero').rect={bottom:500};s.window.emit('scroll');s.tick(0);assert.equal(root.classList.contains('is-docked'),false);assert.equal(card.hidden,true);
+});
+test('fast scrolling cancels stale project commentary; every note matches current project',()=>{
+ const s=setup(false,true);s.project('alpha');s.tick(500);s.project('beta');s.tick(1000);
+ assert.equal(s.get('.sheep-guide-text').textContent,'beta overview');
+ s.get('.sheep-guide-more').emit('click');assert.equal(s.get('.sheep-guide-text').textContent,'beta method');
+ s.project('alpha');assert.equal(s.get('.sheep-guide-card').hidden,true);s.tick(1000);assert.equal(s.get('.sheep-guide-card').hidden,true);
+ s.tick(9000);assert.equal(s.get('.sheep-guide-text').textContent,'alpha overview');
+});
+test('automatic notes dismiss once per project, while manual replay remains available',()=>{
+ const s=setup(false,true);s.project('alpha');s.tick(1000);s.tick(8500);assert.equal(s.get('.sheep-guide-card').hidden,true);
+ s.window.emit('scroll');s.tick(12000);assert.equal(s.get('.sheep-guide-card').hidden,true);
+ s.get('.sheep-project-prompt').emit('click');assert.equal(s.get('.sheep-guide-card').hidden,false);s.tick(9000);assert.equal(s.get('.sheep-guide-card').hidden,false);
+});
+test('muting suppresses automatic notes but preserves manual explanations and further detail',()=>{
+ const s=setup(false,true);s.get('.sheep-auto').emit('click');s.project('alpha');s.tick(15000);assert.equal(s.get('.sheep-guide-card').hidden,true);
+ s.get('.sheep-project-prompt').emit('click');s.get('.sheep-guide-more').emit('click');assert.equal(s.get('.sheep-guide-text').textContent,'alpha method');
+ s.get('.sheep-guide-more').emit('click');assert.equal(s.get('.sheep-guide-text').textContent,'alpha result');
+ s.get('.sheep-guide-more').emit('click');assert.equal(s.get('.sheep-guide-text').textContent,'alpha overview');
+});
+test('pet interaction delays commentary and hiding the page cancels a pending guide',()=>{
+ const s=setup(false,true);s.project('alpha');s.actions[1].emit('click');s.tick(1200);assert.equal(s.get('.sheep-guide-card').hidden,true);
+ s.window.emit('scroll');s.tick(0);s.hidden();assert.equal(s.jobs.size,0);assert.equal(s.get('.sheep-guide-card').hidden,true);
 });

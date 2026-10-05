@@ -27,6 +27,7 @@
   let lastClick = -Infinity, lastWelcome = -Infinity, lastPat = -Infinity, lastPatSpeech = -Infinity;
   let press = null, skipPointerClickUntil = 0, frame = 0, point = null;
   let stroke = null;
+  let guide = null;
   const now = () => performance.now();
   const active = () => visible && !document.hidden;
   const resting = () => ['drowsy', 'yawning', 'sleeping'].includes(state);
@@ -116,6 +117,7 @@
     later('state', 900, awake);
   }
   function pet(announce = false) {
+    guide?.interacted();
     if (state === 'feeding' || state === 'pressed') return;
     engaged = true; lastPat = now(); setState('petting'); neutralGaze(); happyHeart();
     animate(head, [{transform:'rotate(0)'},{transform:'rotate(-5deg)',offset:.5},{transform:'rotate(0)'}], 1000);
@@ -164,6 +166,7 @@
     if (focus) menu.querySelector('summary').focus({preventScroll:true});
   }
   function quiet() {
+    guide?.pause();
     releasePress(true);
     timers.forEach(clearTimeout); timers.clear();
     cancelAnimationFrame(frame); frame = 0; point = null; stroke = null;
@@ -173,11 +176,13 @@
   }
   root.hidden = false; setState('awake');
   button.addEventListener('click', event => {
+    guide?.interacted();
     if (event.detail !== 0 && now() < skipPointerClickUntil) return;
     greet();
   });
   button.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0 || press || resting() || state === 'feeding' || state === 'waking') return;
+    guide?.interacted();
     engage(); press = {id:event.pointerId, held:false};
     button.setPointerCapture(event.pointerId);
     setState('pressed'); neutralGaze();
@@ -219,7 +224,7 @@
       pet(); stroke = null;
     }
   }
-  hero.addEventListener('pointermove', event => {
+  document.addEventListener('pointermove', event => {
     if (event.pointerType !== 'mouse' || !finePointer.matches || !active() || event.buttons) return;
     point = {x:event.clientX,y:event.clientY};
     detectStroke(point.x, point.y);
@@ -247,6 +252,7 @@
     if (menu.open) cancel('idle'); else idleLater();
   });
   root.querySelectorAll('[data-sheep-action]').forEach(action => action.addEventListener('click', () => {
+    guide?.interacted();
     const kind = action.dataset.sheepAction;
     // Restore focus before starting an action so focus never changes its state.
     closeMenu(true); engaged = true;
@@ -262,7 +268,7 @@
   document.addEventListener('focusin', event => { if (!root.contains(event.target)) closeMenu(); });
   root.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
-      event.preventDefault(); closeMenu(true); releasePress(true);
+      event.preventDefault(); guide?.dismiss(); closeMenu(true); releasePress(true);
       cancel('message'); delete button.dataset.talking; status.textContent = '';
     }
   });
@@ -273,4 +279,124 @@
     visible = entry.isIntersecting;
     if (!visible) quiet();
   }).observe(root);
+  // Guide prose is authored alongside resume content, not generated from visitor data.
+  guide = setupProjectGuide();
+  function setupProjectGuide() {
+    let data;
+    try { data = JSON.parse(document.querySelector('#sheep-guide-data')?.textContent || '[]'); }
+    catch { return null; }
+    if (!Array.isArray(data) || !data.length) return null;
+    const entries = data.map(item => ({...item, element:document.getElementById(item.id)}))
+      .filter(item => item.element && Array.isArray(item.notes) && item.notes.length);
+    const card = root.querySelector('.sheep-guide-card');
+    const title = root.querySelector('#sheep-guide-title');
+    const text = root.querySelector('.sheep-guide-text');
+    const count = root.querySelector('.sheep-guide-count');
+    const more = root.querySelector('.sheep-guide-more');
+    const close = root.querySelector('.sheep-guide-close');
+    const explain = root.querySelector('.sheep-explain');
+    const shortcut = root.querySelector('.sheep-project-prompt');
+    const autoButton = root.querySelector('.sheep-auto');
+    const seen = new Set();
+    let current = null, index = 0, automatic = true, pinned = false, updateFrame = 0;
+    let lastAuto = -Infinity, holdUntil = 0;
+    function hide() {
+      cancel('guide-close');
+      if (!card.hidden && card.contains(document.activeElement)) button.focus({preventScroll:true});
+      card.hidden = true; pinned = false;
+    }
+    function dismiss() {
+      if (current) seen.add(current.id);
+      cancel('guide-open'); hide();
+    }
+    function pin() { if (!card.hidden) { pinned = true; cancel('guide-close'); } }
+    function render() {
+      title.textContent = current.title;
+      text.textContent = current.notes[index];
+      count.textContent = `${index + 1} / ${current.notes.length}`;
+      more.textContent = index === current.notes.length - 1 ? 'Back to overview' : 'Tell me more';
+    }
+    function show(manual = false) {
+      if (!current || !root.classList.contains('is-docked')) return;
+      cancel('guide-open'); cancel('message'); delete button.dataset.talking;
+      closeMenu(); engaged = true; awake();
+      index = 0; pinned = manual; render(); card.hidden = false; seen.add(current.id);
+      if (manual) {
+        status.textContent = `${current.title}. ${current.notes[0]}`;
+        more.focus({preventScroll:true});
+      } else {
+        // Automatic notes are visual only, with no unsolicited screen-reader announcement.
+        status.textContent = ''; lastAuto = now();
+        later('guide-close', 8500, () => { if (!pinned) hide(); });
+      }
+    }
+    function scheduleNote() {
+      if (!automatic || !current || seen.has(current.id) || timers.has('guide-open') || !active()) return;
+      const id = current.id;
+      const delay = Math.max(1000, lastAuto + 10000 - now(), holdUntil - now());
+      later('guide-open', delay, () => {
+        if (!automatic || current?.id !== id || seen.has(id)) return;
+        if (menu.open || ['pressed','petting','feeding','waking'].includes(state)) {
+          holdUntil = now() + 1200; scheduleNote(); return;
+        }
+        show();
+      });
+    }
+    function update() {
+      updateFrame = 0;
+      if (document.hidden) return;
+      const headerBottom = document.querySelector('.header-shell').getBoundingClientRect().bottom;
+      const docked = hero.getBoundingClientRect().bottom <= headerBottom + 16;
+      const changedDock = root.classList.contains('is-docked') !== docked;
+      root.classList.toggle('is-docked', docked);
+      if (changedDock) { releasePress(true); closeMenu(); neutralGaze(); }
+      if (docked) visible = true;
+      const readingLine = headerBottom + Math.min(180, (innerHeight - headerBottom) * .28);
+      let candidate = null;
+      if (docked) {
+        const bounds = entries.map(item => ({item, rect:item.element.getBoundingClientRect()}));
+        candidate = bounds.find(({rect}) => rect.top <= readingLine && rect.bottom > readingLine)?.item
+          || bounds.find(({rect}) => rect.top > readingLine && rect.top < innerHeight * .62)?.item || null;
+      }
+      if (candidate?.id !== current?.id) {
+        cancel('guide-open'); hide(); current = candidate; index = 0;
+      }
+      explain.disabled = !current;
+      shortcut.hidden = !current || !docked;
+      if (!docked) { cancel('guide-open'); hide(); }
+      else scheduleNote();
+    }
+    function requestUpdate() {
+      if (!updateFrame) updateFrame = requestAnimationFrame(update);
+    }
+    function manualExplain() { show(true); }
+    shortcut.addEventListener('click', manualExplain);
+    explain.addEventListener('click', manualExplain);
+    more.addEventListener('click', () => {
+      if (!current) return;
+      pin(); index = (index + 1) % current.notes.length; render();
+      status.textContent = current.notes[index];
+    });
+    close.addEventListener('click', () => { dismiss(); shortcut.focus({preventScroll:true}); });
+    card.addEventListener('pointerenter', pin); card.addEventListener('focusin', pin);
+    autoButton.addEventListener('click', () => {
+      automatic = !automatic;
+      autoButton.setAttribute('aria-pressed', String(automatic));
+      autoButton.textContent = `Automatic notes: ${automatic ? 'on' : 'off'}`;
+      if (!automatic) { cancel('guide-open'); hide(); }
+      else scheduleNote();
+    });
+    menu.addEventListener('toggle', () => { if (menu.open) hide(); else scheduleNote(); });
+    addEventListener('scroll', requestUpdate, {passive:true});
+    addEventListener('resize', requestUpdate); addEventListener('load', requestUpdate);
+    addEventListener('focus', requestUpdate);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) requestUpdate(); });
+    if ('ResizeObserver' in window) new ResizeObserver(requestUpdate).observe(document.querySelector('main'));
+    update();
+    return {
+      pause() { cancel('guide-open'); hide(); cancelAnimationFrame(updateFrame); updateFrame = 0; },
+      interacted() { holdUntil = now() + 10000; cancel('guide-open'); hide(); },
+      dismiss
+    };
+  }
 })();
