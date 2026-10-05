@@ -59,7 +59,7 @@
     stroke = null;
   }
   function setState(next) {
-    cancel('state'); cancel('blink'); cancel('idle'); cancel('reaction'); cancel('wander');
+    cancel('state'); cancel('blink'); cancel('idle'); cancel('reaction'); cancel('wander'); cancel('auto-wake');
     roamer?.stop(); stopAnimations(); delete button.dataset.mood;
     state = next; button.dataset.state = next;
     mascot.follow = finePointer.matches && next === 'awake' && active();
@@ -79,13 +79,18 @@
       scheduleBlink();
     });
   }
-  function idleLater() {
-    cancel('idle'); cancel('wander');
-    if (!engaged || state !== 'awake' || !active()) return;
-    // A quiet glance, then an occasional snack; never interrupt a project note.
-    later('wander', 8000, () => {
-      if (!motion.matches && !mascot.scripted && !guide?.isOpen() && !roamer?.wander()) play('turn');
+  function scheduleWander(delay = 4000) {
+    if (timers.has('wander') || !active() || motion.matches || state !== 'awake') return;
+    later('wander', delay, () => {
+      if (!mascot.scripted && !guide?.isOpen()) roamer?.wander();
+      // Retry after blocked routes or an overlapping blink; a single miss cannot strand it.
+      scheduleWander(6500);
     });
+  }
+  function idleLater() {
+    cancel('idle');
+    if (!engaged || state !== 'awake' || !active()) return;
+    scheduleWander();
     later('idle', 20000, () => {
       if (guide?.isOpen()) { idleLater(); return; }
       if (now() - lastSnack >= 90000) { snack(); return; }
@@ -108,7 +113,10 @@
   }
   function yawnAndSleep() {
     setState('yawning');
-    play('sleep', () => setState('sleeping'));
+    play('sleep', () => {
+      setState('sleeping');
+      later('auto-wake', 16000, () => { setState('waking'); play('wake', awake); });
+    });
   }
   function nod() { play('talk', () => { if (motion.matches) play('rest'); }); }
   function hop() { play('hop', () => { if (motion.matches) play('rest'); }); }
@@ -232,8 +240,11 @@
         if (!timers.has('look-away')) later('look-away', 600, clearStroke);
         return;
       }
-      if (Math.hypot(dx,dy)<120) roamer?.stop();
-      cancel('look-away'); engage();
+      if (Math.hypot(dx,dy)<75) {
+        roamer?.stop(); cancel('wander');
+        engage();
+      }
+      cancel('look-away');
       mascot.follow = true; mascot.lookAt(point.x, point.y);
     });
   }, {passive:true});
@@ -258,7 +269,7 @@
   function walking() { play('walk', () => { if (roamer?.moving) walking(); }); }
   roamer = new window.SheepRoam(root, {
     canMove: () => active() && !motion.matches && state === 'awake' && !press && !guide?.isOpen()
-      && !root.contains(document.activeElement),
+      && !root.querySelector(':focus-visible'),
     walk: walking,
     rest: () => { stopAnimations(); play('rest'); }
   });

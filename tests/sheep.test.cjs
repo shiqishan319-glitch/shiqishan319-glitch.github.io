@@ -46,7 +46,7 @@ function setup(reduced = false, withGuide = false) {
     lookAt(x,y){calls.push(['look',x,y]);}
     play(name){this.stop();calls.push(['play',name]);this.scripted=true;return {then:fn=>{this.pending=timeout(()=>{this.scripted=false;fn();},this.data.sequences[name].frames.reduce((n,f)=>n+f[1],0));}};}
   };
-  window.SheepRoam=class {stop(){} wander(){return false;}};
+  window.SheepRoam=class {stop(){} wander(){calls.push(['roam']);return false;}};
   const clearTimeoutMock=id=>jobs.delete(id);
   const ctx={innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
     setTimeout:timeout,clearTimeout:id=>jobs.delete(id),requestAnimationFrame:fn=>timeout(fn,0),cancelAnimationFrame:id=>jobs.delete(id),
@@ -82,8 +82,8 @@ test('head stroking needs reversals and duration; ordinary passing does not pet'
 test('quick taps give head pats, including keyboard activation',()=>{
  const s=setup();s.click();s.tick(150);s.click();assert.equal(s.state(),'petting');assert.match(s.say(),/Thank ewe/);s.tick(2800);assert.equal(s.state(),'awake');
 });
-test('idle glances, snacks once, then sleeps; focus does not wake it',()=>{
- const s=setup();s.tick(8000);assert.ok(s.calls.some(c=>c[1]==='turn'));
+test('idle explores, snacks once, then sleeps; focus does not wake it',()=>{
+ const s=setup();s.tick(8000);assert.ok(s.calls.some(c=>c[0]==='roam'));
  s.tick(12000);assert.equal(s.state(),'feeding');assert.equal(s.say(),'');
  s.tick(2820);assert.equal(s.state(),'awake');
  s.tick(20000);assert.equal(s.state(),'drowsy');s.tick(4000);assert.equal(s.state(),'yawning');s.tick(6400);assert.equal(s.state(),'sleeping');
@@ -148,4 +148,14 @@ test('Play menu is absent; reading-note preference remains in the guide',()=>{
 
 test('an intentional click interrupts passive grazing immediately',()=>{
  const s=setup();s.tick(20000);assert.equal(s.state(),'feeding');s.click();assert.equal(s.state(),'awake');assert.match(s.say(),/hello/);s.tick(3000);assert.equal(s.state(),'awake');
+});
+
+test('blocked roaming retries without requiring a new interaction',()=>{
+ const s=setup();s.tick(4000);assert.equal(s.calls.filter(c=>c[0]==='roam').length,1);s.tick(6500);assert.equal(s.calls.filter(c=>c[0]==='roam').length,2);
+});
+test('movement elsewhere on the page does not reset exploration',()=>{
+ const s=setup();for(let i=0;i<4;i++){s.tick(1000);s.move(300,100);s.tick(0);}assert.ok(s.calls.some(c=>c[0]==='roam'));
+});
+test('a short nap ends automatically and exploration resumes',()=>{
+ const s=setup();s.tick(20000+2820+20000+4000+6400);assert.equal(s.state(),'sleeping');s.tick(16000);assert.equal(s.state(),'waking');s.tick(2750);assert.equal(s.state(),'awake');const n=s.calls.filter(c=>c[0]==='roam').length;s.tick(4000);assert.equal(s.calls.filter(c=>c[0]==='roam').length,n+1);
 });

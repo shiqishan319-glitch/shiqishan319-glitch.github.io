@@ -7,8 +7,8 @@ function setup(width=1200,height=800){
  const root={offsetWidth:82,offsetHeight:92,dataset:{},style:{setProperty:(k,v)=>style[k]=v},
   classList:{add:k=>classes.add(k),toggle:(k,on)=>on?classes.add(k):classes.delete(k)},contains:()=>false,
   getBoundingClientRect:()=>({left:600,top:130,width:82,height:92})};
- let obstacles=[];
- const context={window:{},innerWidth:width,innerHeight:height,document:{querySelector:()=>({getBoundingClientRect:()=>({bottom:70})}),querySelectorAll:()=>obstacles},
+ let obstacles=[],controls=[];
+ const context={window:{},innerWidth:width,innerHeight:height,document:{querySelector:()=>({getBoundingClientRect:()=>({bottom:70})}),querySelectorAll:selector=>selector.startsWith('main ')?obstacles:controls},
   addEventListener:(k,fn)=>listeners[k]=fn,removeEventListener:k=>delete listeners[k],
   requestAnimationFrame:fn=>{frames.set(++seq,fn);return seq},cancelAnimationFrame:id=>frames.delete(id)};
  vm.runInNewContext(fs.readFileSync(__dirname+'/../sheep-roam.js','utf8'),context);
@@ -34,4 +34,12 @@ test('route checking rejects crossing text, not just blocked destinations',()=>{
 });
 test('reduced motion or an open guide prevents wandering',()=>{
  const s=setup();s.allow(false);assert.equal(s.pet.wander(),false);assert.equal(s.frames.size,0);
+});
+
+test('a medium-width panel can use the lower edge when text blocks the gutter',()=>{
+ const s=setup(850,700);s.obstacle({left:0,right:850,top:100,bottom:700,width:850,height:600});assert.equal(s.pet.wander(),true);assert.equal(s.pet.moving,true);
+});
+
+test('a sheep initially overlapping content can move out instead of being trapped',()=>{
+ const s=setup();s.pet.place(100,300);const obstacle={left:100,right:200,top:290,bottom:330};assert.equal(s.pet.clearRoute(100,450,[obstacle]),true);assert.equal(s.pet.clearRoute(100,301,[obstacle]),false);
 });

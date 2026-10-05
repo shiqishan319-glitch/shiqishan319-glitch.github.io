@@ -40,9 +40,17 @@
     clearRoute(x,y,obstacles) {
       const b=this.bounds(),distance=Math.hypot(x-this.x,y-this.y);
       // Feet/body occupy most of the SVG; allow its transparent outer padding.
-      for(let t=0;t<=1;t+=1/Math.max(1,Math.ceil(distance/16))) {
-        const left=this.x+(x-this.x)*t+8,top=this.y+(y-this.y)*t+6;
-        if(obstacles.some(r=>left<r.right+4 && left+b.width-16>r.left-4 && top<r.bottom+4 && top+b.height-18>r.top-4))return false;
+      const overlap=(left,top,r)=>Math.max(0,Math.min(left+b.width-16,r.right+4)-Math.max(left,r.left-4))
+        *Math.max(0,Math.min(top+b.height-18,r.bottom+4)-Math.max(top,r.top-4));
+      // If a resize/scroll left it over content, allow a route that exits that overlap.
+      const initial=obstacles.map(r=>overlap(this.x+8,this.y+6,r));
+      const steps=Math.max(1,Math.ceil(distance/16));
+      for(let step=0;step<=steps;step++) {
+        const t=step/steps,left=this.x+(x-this.x)*t+8,top=this.y+(y-this.y)*t+6;
+        if(obstacles.some((r,i)=>{
+          const area=overlap(left,top,r);
+          return area>0 && (!initial[i] || area>initial[i]+.01 || step===steps);
+        }))return false;
       }
       return true;
     }
@@ -50,18 +58,21 @@
       if(this.moving || !this.options.canMove())return false;
       const b=this.bounds(),obstacles=this.obstacles(),candidates=[];
       // Try nearby open spaces as well as both page margins, with no fixed dock.
-      for(const dx of [-240,-150,-80,80,150,240])for(const dy of [-180,-90,0,90,180]) {
+      for(const dx of [-240,-150,-80,0,80,150,240])for(const dy of [-180,-90,0,90,180]) {
         const x=Math.max(8,Math.min(innerWidth-b.width-8,this.x+dx));
         const y=Math.max(b.top,Math.min(innerHeight-b.height-12,this.y+dy));
         if(Math.hypot(x-this.x,y-this.y)>45 && this.clearRoute(x,y,obstacles))candidates.push({x,y});
       }
-      // On narrow screens there is no side gutter: use the lower edge, avoiding controls.
-      if(!candidates.length && innerWidth<640) {
-        const y=innerHeight-b.height-12;
+      // A narrow browser panel can have no usable gutter at any breakpoint.
+      // Fall back to the lower edge, still avoiding interactive controls.
+      if(!candidates.length) {
+        const bottom=innerHeight-b.height-12;
         const controls=[...document.querySelectorAll('a,button,input,summary')].filter(el=>!this.root.contains(el))
           .flatMap(el=>[...el.getClientRects()]);
-        for(const x of [12,innerWidth*.35,innerWidth-b.width-12]) {
-          if(Math.abs(x-this.x)>45 && this.clearRoute(x,y,controls))candidates.push({x,y});
+        for(const x of [12,innerWidth*.35,this.x,innerWidth-b.width-12]) {
+          for(const y of [bottom,Math.max(b.top,bottom-100),Math.max(b.top,bottom-190)]) {
+            if(Math.hypot(x-this.x,y-this.y)>45 && this.clearRoute(x,y,controls))candidates.push({x,y});
+          }
         }
       }
       if(!candidates.length)return false;
