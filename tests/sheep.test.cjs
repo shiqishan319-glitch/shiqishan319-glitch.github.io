@@ -42,7 +42,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
   const calls=[];
   get('#sheep-motion-data').textContent=fs.readFileSync(path.join(__dirname,'../assets/sheep-poses.json'),'utf8');
   window.BUSheep=class {
-    constructor(svg,data){this.data=data;this.follow=true;this.pointer=()=>{};}
+    constructor(svg,data){this.data=data;this.values={};this.follow=true;this.pointer=()=>{};}
     stop(){clearTimeoutMock(this.pending);this.scripted=false;}
     frame(id){this.stop();calls.push(['frame',id]);}
     lookAt(x,y){calls.push(['look',x,y]);}
@@ -253,4 +253,12 @@ test('unrelated pointers cannot cancel an active drag',()=>{
 });
 test('missed mouse release clears the drag without snapping back',()=>{
  const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.doc.emit('pointermove',{pointerId:1,buttons:0,clientX:525,clientY:350});assert.equal(s.state(),'awake');assert.equal(s.b.dataset.carried,undefined);assert.ok(!s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));
+});
+
+test('picking up adds a hanging pose without moving the pointer anchor',()=>{
+ const s=setup();s.down();s.tick(400);assert.equal(s.b.dataset.carried,'true');assert.ok(s.calls.some(c=>c[1]==='carried'));assert.ok(!s.calls.some(c=>c[0]==='place'));
+ s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});assert.deepEqual(s.calls.at(-1),['place',500,330]);s.up();assert.equal(s.b.dataset.carried,undefined);
+});
+test('a quick tap never triggers the suspended pose',()=>{
+ const s=setup();s.down();s.tick(80);s.up();assert.ok(!s.calls.some(c=>c[1]==='carried'));assert.equal(s.b.dataset.carried,undefined);
 });

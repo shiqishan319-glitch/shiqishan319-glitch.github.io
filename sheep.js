@@ -218,7 +218,8 @@
   }
   function releasePress(cancelled = false, revert = false) {
     if (!press) return;
-    const prior = press; press = null; cancel('hold');
+    const prior = press; press = null; cancel('hold');cancel('carry-settle');
+    svg.style.setProperty('--carry-sway','0deg');
     if (button.hasPointerCapture(prior.id)) button.releasePointerCapture(prior.id);
     delete button.dataset.carried;
     if (prior.dragging && revert) roamer.place(prior.originX,prior.originY);
@@ -234,6 +235,19 @@
       } else awake();
     }
   }
+  function liftSheep() {
+    if (!press || press.lifted) return;
+    press.lifted=true;button.dataset.carried='true';
+    // Keep the body/head placement and current gaze. Only relax the limbs and expression.
+    const values={...mascot.values,tuck:10,'leg-bl':-12,'leg-br':-8,'leg-fl':13,'leg-fr':8,
+      'ear-l':-7,'ear-r':9,lid:0,closed:0,happy:0,smile:0,mouth:.4,'mouth-y':.65,
+      sleep:0,grass:0,heart:0,shadow:.15};
+    delete values['gaze-x'];delete values['gaze-y'];
+    let pose=motionData.poses.find(p=>p.id==='carried');
+    if(!pose){pose={id:'carried',values};motionData.poses.push(pose);}else pose.values=values;
+    motionData.sequences.carried={frames:[['carried',220]]};
+    play('carried');
+  }
   function movePress(event) {
     if (!press || press.id !== event.pointerId) return;
     if (event.type==='pointermove' && press.pointerType==='mouse' && event.buttons===0) {
@@ -243,9 +257,11 @@
     const dx=event.clientX-press.x,dy=event.clientY-press.y;
     if (!press.dragging && Math.hypot(dx,dy)<(press.pointerType==='touch'?12:8)) return;
     if (!press.dragging) {
-      press.dragging=true; cancel('hold'); button.dataset.carried='true';
-      stopAnimations(); // Keep the grabbed pose stable; do not lift or turn under the pointer.
+      press.dragging=true; cancel('hold');liftSheep();
     }
+    const sway=Math.max(-9,Math.min(9,(event.clientX-press.lastX)*.22));
+    svg.style.setProperty('--carry-sway',sway+'deg');press.lastX=event.clientX;
+    later('carry-settle',140,()=>svg.style.setProperty('--carry-sway','0deg'));
     roamer.place(press.originX+dx,press.originY+dy);
   }
   function quiet() {
@@ -271,10 +287,14 @@
     setState('pressed');
     // Stop locomotion before taking the origin; never record a moving start point.
     press={id:event.pointerId,held:false,dragging:false,wasResting,pointerType:event.pointerType,
-      x:event.clientX,y:event.clientY,originX:roamer.x,originY:roamer.y};
+      x:event.clientX,y:event.clientY,lastX:event.clientX,originX:roamer.x,originY:roamer.y};
+    const rect=svg.getBoundingClientRect();
+    let grab={x:(event.clientX-rect.left)/rect.width*265,y:(event.clientY-rect.top)/rect.height*265};
+    if(typeof DOMPoint!=='undefined' && svg.getScreenCTM()) grab=new DOMPoint(event.clientX,event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+    svg.style.setProperty('--carry-x',grab.x+'px');svg.style.setProperty('--carry-y',grab.y+'px');
     button.focus({preventScroll:true});
     try { button.setPointerCapture(event.pointerId); } catch { /* Document listeners are the fallback. */ }
-    later('hold',400,()=>{if(press && !press.dragging){press.held=true;play('press');}});
+    later('hold',400,()=>{if(press && !press.dragging){press.held=true;liftSheep();}});
   });
   // Capture plus document-level routing keeps fast drags and release outside the SVG reliable.
   document.addEventListener('pointermove',movePress,{passive:true});

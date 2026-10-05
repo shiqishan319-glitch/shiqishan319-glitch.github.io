@@ -161,3 +161,10 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 .sheep-dropping[hidden]{display:none}.sheep-dropping svg{display:block;width:100%;height:100%}
 @keyframes dropping-fade{0%{opacity:0}8%,70%{opacity:1}100%{opacity:0}}
 @media print,(prefers-reduced-motion:reduce){.sheep-dropping{display:none}}
+
+/* The actual grab point is the pivot, including when the SVG faces left. */
+.bu-suspension{transform-origin:var(--carry-x,160px) var(--carry-y,65px);transform:none;transition:transform .2s ease-out}
+.sheep-button[data-carried] .bu-suspension{transform:rotate(var(--carry-sway,0deg)) scale(.97,1.09)}
+.sheep-button .bu-shadow{transition:opacity .18s ease-out}
+.sheep-button[data-carried] .bu-shadow{opacity:0}
+@media(prefers-reduced-motion:reduce){.sheep-button[data-carried] .bu-suspension{transform:scale(.97,1.09)}}
