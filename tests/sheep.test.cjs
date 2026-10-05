@@ -14,7 +14,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
     querySelectorAll(q) { return q === '[data-sheep-action]' ? actions : []; }
     addEventListener(k,fn) { (this.listeners[k] ||= []).push(fn); }
     removeEventListener(k,fn) { this.listeners[k]=(this.listeners[k]||[]).filter(f=>f!==fn); }
-    emit(k,event={}) { for(const fn of this.listeners[k]||[]) fn({target:this,preventDefault(){},...event}); }
+    emit(k,event={}) { const e={type:k,target:this,preventDefault(){},...event};for(const fn of this.listeners[k]||[]) fn(e);if(this===get('.sheep-button') && ['pointermove','pointerup','pointercancel'].includes(k))doc.emit(k,e); }
     toggleAttribute(k,on) { const key=k.replace(/^data-/, ''); if(on)this.dataset[key]='';else delete this.dataset[key]; }
     contains(el) { return [...elements.values()].includes(el); }
     setAttribute(k,v) { this[k]=v; }
@@ -78,7 +78,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
     say:()=>get('.sheep-status').textContent,animations:()=>animationCount,
     hidden:()=>{doc.hidden=true;doc.emit('visibilitychange');},offscreen:()=>observer([{isIntersecting:false}]),
     click:()=>b.emit('click',{detail:0}),
-    down:()=>b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1}),
+    down:()=>b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,pointerType:'mouse',clientX:420,clientY:320}),
     up:()=>b.emit('pointerup',{pointerId:1}),
     move:(x,y)=>doc.emit('pointermove',{pointerType:'mouse',buttons:0,clientX:x,clientY:y})};
 }
@@ -87,7 +87,7 @@ test('clicks count once; third hello unlocks the count-a-sheep line',()=>{
 });
 test('holding bounces once; cancel releases without a greeting or count',()=>{
  const s=setup();s.down();s.tick(450);s.up();assert.match(s.say(),/Springy/);s.b.emit('click',{detail:1});assert.match(s.say(),/Springy/);
- s.tick(700);s.down();s.tick(450);s.b.emit('pointercancel');assert.equal(s.state(),'awake');
+ s.tick(700);s.down();s.tick(450);s.b.emit('pointercancel',{pointerId:1});assert.equal(s.state(),'awake');
 });
 test('head stroking needs reversals and duration; ordinary passing does not pet',()=>{
  const s=setup();s.move(60,20);s.tick(200);s.move(75,20);s.tick(200);assert.equal(s.state(),'awake');s.move(60,20);s.tick(200);s.move(75,20);assert.equal(s.state(),'petting');s.tick(2800);assert.equal(s.state(),'awake');
@@ -175,8 +175,8 @@ test('dragging moves the sheep and drops with a landing, without a second click'
  s.b.emit('pointermove',{pointerId:1,clientX:520,clientY:350});assert.equal(s.b.dataset.carried,'true');assert.deepEqual(s.calls.at(-1),['place',500,330]);
  s.up();assert.equal(s.state(),'landing');s.b.emit('click',{detail:1});assert.equal(s.state(),'landing');s.tick(300);assert.equal(s.state(),'awake');
 });
-test('cancelled dragging returns to its original position',()=>{
- const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:520,clientY:350});s.b.emit('pointercancel');assert.ok(s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));assert.equal(s.b.dataset.carried,undefined);
+test('cancelled dragging stays at its last position',()=>{
+ const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:520,clientY:350});s.b.emit('pointercancel',{pointerId:1});assert.ok(!s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));assert.equal(s.b.dataset.carried,undefined);
 });
 test('small pointer jitter preserves a normal click',()=>{
  const s=setup();s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,clientX:420,clientY:320});s.b.emit('pointermove',{pointerId:1,clientX:422,clientY:324});s.up();s.b.emit('click',{detail:1});assert.match(s.say(),/hello/);assert.ok(!s.calls.some(c=>c[0]==='place'));
@@ -223,4 +223,34 @@ test('even repeated lucky rolls produce at most one dropping per visit',()=>{
  const s=setup(false,false,true);const drop=s.get('.sheep-dropping');let hidden=true,appearances=0;
  Object.defineProperty(drop,'hidden',{get:()=>hidden,set:value=>{hidden=value;if(value===false)appearances++;}});
  s.random(0);s.tick(220000);assert.ok(s.calls.filter(c=>c[1]==='eat').length>=2);assert.equal(appearances,1);
+});
+
+test('sleeping and waking sheep can be grabbed and dragged immediately',()=>{
+ for(const waking of [false,true]){const s=setup();s.tick(30400);assert.equal(s.state(),'sleeping');if(waking)s.click();
+ s.b.emit('pointerdown',{isPrimary:true,button:0,pointerId:3,pointerType:'mouse',clientX:420,clientY:320});assert.equal(s.state(),'pressed');
+ s.doc.emit('pointermove',{pointerId:3,buttons:1,clientX:520,clientY:350});assert.equal(s.b.dataset.carried,'true');
+ s.doc.emit('pointerup',{pointerId:3,clientX:520,clientY:350});assert.equal(s.state(),'landing');}
+});
+test('Escape explicitly restores the pre-drag position',()=>{
+ const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.get('.sheep-companion').emit('keydown',{key:'Escape'});assert.ok(s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));
+});
+test('fast release applies its final coordinate even without a move event',()=>{
+ const s=setup();s.down();s.doc.emit('pointerup',{pointerId:1,clientX:520,clientY:350});assert.ok(s.calls.some(c=>c[0]==='place'&&c[1]===500&&c[2]===330));assert.equal(s.state(),'landing');
+});
+test('capture failure still supports document-level dragging and release',()=>{
+ const s=setup();s.b.setPointerCapture=()=>{throw Error('capture unavailable');};s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.doc.emit('pointerup',{pointerId:1});assert.equal(s.state(),'landing');
+});
+test('a fresh click after a drop is not swallowed by old drag suppression',()=>{
+ const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.up();s.down();s.up();s.b.emit('click',{detail:1});assert.match(s.say(),/hello/);
+});
+test('losing capture keeps the new position, and a sleeping tap still wakes',()=>{
+ const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.b.emit('lostpointercapture',{pointerId:1});assert.equal(s.state(),'awake');assert.ok(!s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));
+ const t=setup();t.tick(30400);t.down();t.up();t.b.emit('click',{detail:1});assert.equal(t.state(),'waking');
+});
+
+test('unrelated pointers cannot cancel an active drag',()=>{
+ const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.doc.emit('pointercancel',{pointerId:2});s.doc.emit('pointerup',{pointerId:2});assert.equal(s.state(),'pressed');s.up();assert.equal(s.state(),'landing');
+});
+test('missed mouse release clears the drag without snapping back',()=>{
+ const s=setup();s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.doc.emit('pointermove',{pointerId:1,buttons:0,clientX:525,clientY:350});assert.equal(s.state(),'awake');assert.equal(s.b.dataset.carried,undefined);assert.ok(!s.calls.some(c=>c[0]==='place'&&c[1]===400&&c[2]===300));
 });

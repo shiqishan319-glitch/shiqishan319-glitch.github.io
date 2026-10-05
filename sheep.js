@@ -7,7 +7,7 @@
   const svg = button.querySelector('svg');
   const motionData = JSON.parse(document.querySelector('#sheep-motion-data').textContent);
   // Short transitions share the same gaze-preserving controller as the full actions.
-  for (const [name,id] of [['rest','idle'],['drowsy','drowsy'],['press','crouch'],['carry','air'],['land','land']]) {
+  for (const [name,id] of [['rest','idle'],['drowsy','drowsy'],['press','crouch'],['land','land']]) {
     motionData.sequences[name] = {frames:[[id,300]]};
   }
   const mascot = new window.BUSheep(svg, motionData);
@@ -216,19 +216,37 @@
     speak('Soft wool. Springy little hooves.', true);
     hop();
   }
-  function releasePress(cancelled = false) {
+  function releasePress(cancelled = false, revert = false) {
     if (!press) return;
     const prior = press; press = null; cancel('hold');
     if (button.hasPointerCapture(prior.id)) button.releasePointerCapture(prior.id);
     delete button.dataset.carried;
-    if (prior.dragging && cancelled) roamer.place(prior.originX,prior.originY);
+    if (prior.dragging && revert) roamer.place(prior.originX,prior.originY);
     if (prior.dragging || prior.held || cancelled) skipPointerClickUntil = now() + 500;
     if (state === 'pressed') {
       if (prior.dragging && !cancelled) {
         setState('landing'); play('land',awake);
         speak('A new little spot. Thank ewe.',true);
-      } else if (prior.held && !cancelled) bounce(); else awake();
+      } else if (prior.held && !cancelled) bounce();
+      else if (prior.wasResting && !cancelled) {
+        // Preserve click-to-wake while still accepting drags from every sleeping pose.
+        setState('sleeping');
+      } else awake();
     }
+  }
+  function movePress(event) {
+    if (!press || press.id !== event.pointerId) return;
+    if (event.type==='pointermove' && press.pointerType==='mouse' && event.buttons===0) {
+      releasePress(true); return;
+    }
+    if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return;
+    const dx=event.clientX-press.x,dy=event.clientY-press.y;
+    if (!press.dragging && Math.hypot(dx,dy)<(press.pointerType==='touch'?12:8)) return;
+    if (!press.dragging) {
+      press.dragging=true; cancel('hold'); button.dataset.carried='true';
+      stopAnimations(); // Keep the grabbed pose stable; do not lift or turn under the pointer.
+    }
+    roamer.place(press.originX+dx,press.originY+dy);
   }
   function quiet() {
     roamer?.stop(); clearGrass(); clearDropping(); guide?.pause();
@@ -241,31 +259,31 @@
   root.hidden = false; setState('awake'); engage();
   button.addEventListener('click', event => {
     guide?.interacted();
-    if (event.detail !== 0 && now() < skipPointerClickUntil) return;
+    if ((event.detail !== 0 || event.pointerType) && now() < skipPointerClickUntil) return;
     greet();
   });
   button.addEventListener('pointerdown', event => {
-    if (!event.isPrimary || event.button !== 0 || press || resting() || state === 'waking') return;
+    if (!event.isPrimary || event.button !== 0 || press || !roamer) return;
+    event.preventDefault();
+    const wasResting=resting() || state==='waking';
     guide?.interacted();
-    engage(); press = {id:event.pointerId, held:false,dragging:false,
+    engaged=true; skipPointerClickUntil=0;
+    setState('pressed');
+    // Stop locomotion before taking the origin; never record a moving start point.
+    press={id:event.pointerId,held:false,dragging:false,wasResting,pointerType:event.pointerType,
       x:event.clientX,y:event.clientY,originX:roamer.x,originY:roamer.y};
-    button.setPointerCapture(event.pointerId);
-    setState('pressed'); play('press');
-    later('hold', 400, () => { if (press) press.held = true; });
+    button.focus({preventScroll:true});
+    try { button.setPointerCapture(event.pointerId); } catch { /* Document listeners are the fallback. */ }
+    later('hold',400,()=>{if(press && !press.dragging){press.held=true;play('press');}});
   });
-  button.addEventListener('pointermove', event => {
-    if (!press || press.id !== event.pointerId) return;
-    const dx=event.clientX-press.x,dy=event.clientY-press.y;
-    if (!press.dragging && Math.hypot(dx,dy)<12) return;
-    if (!press.dragging) {
-      press.dragging=true; cancel('hold'); button.dataset.carried='true';
-      play('carry');
-    }
-    roamer.place(press.originX+dx,press.originY+dy);
+  // Capture plus document-level routing keeps fast drags and release outside the SVG reliable.
+  document.addEventListener('pointermove',movePress,{passive:true});
+  document.addEventListener('pointerup',event=>{
+    if(press?.id!==event.pointerId)return;
+    movePress(event);releasePress();
   });
-  button.addEventListener('pointerup', event => { if (press?.id === event.pointerId) releasePress(); });
-  button.addEventListener('pointercancel', () => releasePress(true));
-  button.addEventListener('lostpointercapture', () => { if (press) releasePress(true); });
+  document.addEventListener('pointercancel',event=>{if(press?.id===event.pointerId)releasePress(true);});
+  button.addEventListener('lostpointercapture',event=>{if(press?.id===event.pointerId)releasePress(true);});
   button.addEventListener('dragstart', event => event.preventDefault());
   root.addEventListener('focusin', () => roamer?.stop());
   button.addEventListener('focus', () => {
@@ -326,7 +344,7 @@
   hero.addEventListener('pointerleave', () => { stroke = null; later('look-away', 650, clearStroke); });
   root.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
-      event.preventDefault(); guide?.dismiss(); releasePress(true);
+      event.preventDefault(); guide?.dismiss(); releasePress(true,true);
       cancel('message'); delete button.dataset.talking; status.textContent = '';
     }
   });
@@ -444,7 +462,7 @@
       const docked = hero.getBoundingClientRect().bottom <= headerBottom + 16;
       const changedDock = root.classList.contains('is-docked') !== docked;
       root.classList.toggle('is-docked', docked);
-      if (changedDock) { releasePress(true); clearStroke(); }
+      if (changedDock) { clearStroke(); }
       if (docked) visible = true;
       const readingLine = headerBottom + Math.min(180, (innerHeight - headerBottom) * .28);
       let candidate = null;
