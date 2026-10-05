@@ -46,6 +46,7 @@ function setup(reduced = false, withGuide = false) {
     lookAt(x,y){calls.push(['look',x,y]);}
     play(name){this.stop();calls.push(['play',name]);this.scripted=true;return {then:fn=>{this.pending=timeout(()=>{this.scripted=false;fn();},this.data.sequences[name].frames.reduce((n,f)=>n+f[1],0));}};}
   };
+  window.SheepRoam=class {stop(){} wander(){return false;}};
   const clearTimeoutMock=id=>jobs.delete(id);
   const ctx={innerHeight:800,document:doc,performance:{now:()=>time},matchMedia:q=>q.includes('reduced-motion')?motion:fine,
     setTimeout:timeout,clearTimeout:id=>jobs.delete(id),requestAnimationFrame:fn=>timeout(fn,0),cancelAnimationFrame:id=>jobs.delete(id),

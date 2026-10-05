@@ -122,3 +122,23 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 
 /* Optional reading-note preference stays with the note, not the pet. */
 .sheep-auto{display:block;margin:4px 0 0;padding:8px 0;min-height:32px;border:0!important;background:transparent;color:#877193;font-family:inherit;font-size:10px;line-height:1.4;cursor:pointer;text-align:left}.sheep-auto:hover{text-decoration:underline}.sheep-auto:focus-visible{outline:2px solid #a08bb7;outline-offset:2px}
+
+/* BU walks freely; only the optional reading note has a panel. */
+.sheep-companion.is-free,.sheep-companion.is-free.is-docked{position:fixed;left:var(--pet-x);top:var(--pet-y);right:auto;bottom:auto;width:82px;padding:0;background:none;border:0;border-radius:0;box-shadow:none;backdrop-filter:none;z-index:8}
+.sheep-companion.is-free .sheep-button{width:82px;min-height:92px;background:transparent}
+.is-free .sheep-button:hover{background:transparent}
+.is-free .sheep-caption{opacity:0;transition:opacity .2s}
+.is-free:hover .sheep-caption,.is-free:focus-within .sheep-caption,.is-free [data-talking] .sheep-caption{opacity:1}
+.is-free .sheep-project-prompt{position:absolute;left:0;bottom:100%;background:transparent;min-height:28px;padding:3px 0;text-shadow:0 1px 4px #fff;font-size:9px}
+.is-free .sheep-project-prompt:hover{text-decoration:underline;background:transparent}
+.is-free .sheep-button svg{width:76px;height:76px;transform:scaleX(1)}
+.is-free.faces-left .sheep-button svg{transform:scaleX(-1)}
+.is-free .sheep-guide-card{right:auto;left:var(--note-x,0px);bottom:calc(100% + 30px)}
+.is-free.note-below .sheep-guide-card{top:calc(100% + 12px);bottom:auto}
+.is-free .sheep-bubble{top:8px}
+.is-free.speech-right .sheep-bubble{left:calc(100% + 10px);right:auto}
+.is-free.speech-right .sheep-bubble::after{left:-5px;right:auto;transform:rotate(225deg)}
+@media(max-width:640px){.sheep-companion.is-free,.sheep-companion.is-free.is-docked{width:66px}.sheep-companion.is-free .sheep-button{width:66px;min-height:78px}.is-free .sheep-button svg{width:60px;height:60px}.is-free .sheep-guide-card{max-height:calc(100dvh - 260px)}}
+@media(prefers-reduced-motion:reduce){.is-free .sheep-caption{transition:none}}
+
+.is-free .sheep-button .sheep-bubble,.is-free.speech-right .sheep-button .sheep-bubble{left:var(--speech-x);right:auto}

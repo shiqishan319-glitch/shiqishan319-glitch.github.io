@@ -31,6 +31,7 @@
   let press = null, skipPointerClickUntil = 0, frame = 0, point = null;
   let stroke = null;
   let guide = null;
+  let roamer = null;
   let lastSnack = -Infinity;
   const now = () => performance.now();
   const active = () => visible && !document.hidden;
@@ -59,7 +60,7 @@
   }
   function setState(next) {
     cancel('state'); cancel('blink'); cancel('idle'); cancel('reaction'); cancel('wander');
-    stopAnimations(); delete button.dataset.mood;
+    roamer?.stop(); stopAnimations(); delete button.dataset.mood;
     state = next; button.dataset.state = next;
     mascot.follow = finePointer.matches && next === 'awake' && active();
     button.toggleAttribute('data-sleeping', next === 'sleeping');
@@ -83,7 +84,7 @@
     if (!engaged || state !== 'awake' || !active()) return;
     // A quiet glance, then an occasional snack; never interrupt a project note.
     later('wander', 8000, () => {
-      if (!motion.matches && !mascot.scripted && !guide?.isOpen()) play('turn');
+      if (!motion.matches && !mascot.scripted && !guide?.isOpen() && !roamer?.wander()) play('turn');
     });
     later('idle', 20000, () => {
       if (guide?.isOpen()) { idleLater(); return; }
@@ -158,7 +159,7 @@
     }
   }
   function quiet() {
-    guide?.pause();
+    roamer?.stop(); guide?.pause();
     releasePress(true);
     timers.forEach(clearTimeout); timers.clear();
     cancelAnimationFrame(frame); frame = 0; point = null; stroke = null;
@@ -183,6 +184,7 @@
   button.addEventListener('pointercancel', () => releasePress(true));
   button.addEventListener('lostpointercapture', () => { if (press) releasePress(true); });
   button.addEventListener('dragstart', event => event.preventDefault());
+  root.addEventListener('focusin', () => roamer?.stop());
   button.addEventListener('focus', () => {
     // Focus alone must not wake a sleeping sheep before the user's activation.
     if (state === 'awake') { engage(); clearStroke(); }
@@ -190,7 +192,7 @@
   button.addEventListener('pointerenter', event => {
     cancel('look-away');
     if (event.pointerType !== 'mouse' || !finePointer.matches || resting()) return;
-    engage();
+    roamer?.stop(); engage();
     if (state === 'awake' && !button.dataset.talking && now() - lastWelcome > 15000) {
       lastWelcome = now(); speak('Oh! A visitor. Hello, ewe.');
       if (!mascot.scripted) nod();
@@ -230,6 +232,7 @@
         if (!timers.has('look-away')) later('look-away', 600, clearStroke);
         return;
       }
+      if (Math.hypot(dx,dy)<120) roamer?.stop();
       cancel('look-away'); engage();
       mascot.follow = true; mascot.lookAt(point.x, point.y);
     });
@@ -252,6 +255,13 @@
   }).observe(root);
   // Guide prose is authored alongside resume content, not generated from visitor data.
   guide = setupProjectGuide();
+  function walking() { play('walk', () => { if (roamer?.moving) walking(); }); }
+  roamer = new window.SheepRoam(root, {
+    canMove: () => active() && !motion.matches && state === 'awake' && !press && !guide?.isOpen()
+      && !root.contains(document.activeElement),
+    walk: walking,
+    rest: () => { stopAnimations(); play('rest'); }
+  });
   function setupProjectGuide() {
     let data;
     try { data = JSON.parse(document.querySelector('#sheep-guide-data')?.textContent || '[]'); }
