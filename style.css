@@ -198,3 +198,20 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 @media (prefers-reduced-motion:no-preference){.notebook-fold{animation:notebook-unfold .28s ease-out both}.behind-work[open] .notebook-stage{animation:notebook-stage-in .34s both}.behind-work[open] .notebook-stage:nth-child(2){animation-delay:.055s}.behind-work[open] .notebook-stage:nth-child(3){animation-delay:.11s}@keyframes notebook-unfold{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}@keyframes notebook-stage-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
 @media(max-width:640px){.project-details.behind-work{margin-top:24px}.notebook-summary-copy b{font-size:11px}.notebook-fold{margin-left:-2px;margin-right:-2px;padding:15px 0 0;background:transparent;border-top-color:#d6dfd1}.notebook-fold::after{display:none}.notebook-trail{padding:0 2px;margin-bottom:12px}.notebook-trail-item{font-size:9px}.notebook-trail-item:not(:last-child)::after{width:16px;margin:0 7px}.notebook-stages{display:block;background:transparent}.notebook-stage{padding:15px 14px;border-top:1px solid #dce3d8}.notebook-stage:first-child{border-top:0}.notebook-stage-number{margin-bottom:8px}.notebook-stage h5{font-size:17px}.notebook-stage p{font-size:12px;line-height:1.7}}
 @media print{.behind-work{display:none}}
+
+/* Reading rhythm: a little movement at landmarks, never motion for its own sake. */
+@media (prefers-reduced-motion:no-preference){
+  .focus-primary,.focus-secondary,.focus-tertiary,.canvas-orbit{transition:transform .55s cubic-bezier(.2,.7,.2,1),opacity .45s ease,filter .45s ease}
+  .hero.is-reading .focus-primary{transform:rotate(-1.25deg) translate(10px,6px) scale(.965);opacity:.83}
+  .hero.is-reading .focus-secondary{transform:rotate(1.25deg) translate(3px,1px) scale(.975);opacity:.76}
+  .hero.is-reading .focus-tertiary{transform:rotate(-.75deg) translate(7px,-2px) scale(.98);opacity:.8}
+  .hero.is-reading .canvas-orbit{transform:rotate(14deg) scale(.94);opacity:.58}
+  .motion-reveal{opacity:0;transform:translateY(16px);transition:opacity .56s cubic-bezier(.2,.7,.2,1),transform .56s cubic-bezier(.2,.7,.2,1)}
+  .motion-reveal.is-revealed{opacity:1;transform:none}
+  .work-project> :not(.behind-work),#creator-assistant> :not(.behind-work){transition:opacity .26s ease,filter .26s ease,transform .26s ease}
+  .work-project.is-notebook-open> :not(.behind-work),#creator-assistant.is-notebook-open> :not(.behind-work){opacity:.64;filter:saturate(.82);transform:translateX(-4px)}
+  .work-project.is-notebook-open .project-heading,#creator-assistant.is-notebook-open>.entry-header{opacity:.78}
+}
+@media(max-width:640px){
+  .hero.is-reading .focus-primary,.hero.is-reading .focus-secondary,.hero.is-reading .focus-tertiary{transform:none;opacity:1}
+}

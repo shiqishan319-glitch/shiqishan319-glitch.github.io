@@ -174,4 +174,34 @@ for (const [projectId, notebook] of Object.entries(projectNotebooks)) {
   }
   details.classList.add('behind-work');
   details.innerHTML = buildNotebook(notebook);
+  details.addEventListener('toggle', () => project.classList.toggle('is-notebook-open', details.open));
+}
+
+// Let the masthead settle as the reader moves into the work. The motion is
+// deliberately small: it establishes a reading rhythm without turning the CV
+// into a scroll spectacle.
+const hero = document.querySelector('.hero');
+const focusCanvas = document.querySelector('.focus-canvas');
+function updateHeroRhythm() {
+  if (!hero || !focusCanvas) return;
+  hero.classList.toggle('is-reading', window.scrollY > Math.max(88, hero.offsetHeight * 0.34));
+}
+addEventListener('scroll', updateHeroRhythm, { passive: true });
+addEventListener('resize', updateHeroRhythm);
+updateHeroRhythm();
+
+// Project headings enter once, close to the point where a reader reaches them.
+// Content remains fully available when motion is reduced or JavaScript is absent.
+if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const revealObserver = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add('is-revealed');
+      revealObserver.unobserve(entry.target);
+    }
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.14 });
+  for (const item of document.querySelectorAll('.work-project .project-heading, #creator-assistant > .entry-header')) {
+    item.classList.add('motion-reveal');
+    revealObserver.observe(item);
+  }
 }
