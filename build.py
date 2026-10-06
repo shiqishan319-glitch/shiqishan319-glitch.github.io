@@ -32,10 +32,59 @@ def logo(filename):
 
 LOGOS = {'LSE':'lse.svg', 'CUC':'cuc.jpg', 'Alibaba · Qwen':'qwen.png', 'Xiaohongshu · Pugongying':'xiaohongshu.png', 'Publicis Groupe':'publicis.png'}
 
+# Short, self-contained explanations for terms and metrics that can be opaque to visitors.
+TOOLTIPS = {
+    'Multi-Agent System': 'A system where multiple specialized AI agents coordinate to complete a larger task.',
+    'Skill': 'A reusable instruction set that helps an Agent perform a task consistently.',
+    'Runtime': 'The execution layer that manages an Agent’s context, tools, and task flow.',
+    'Subagent': 'A helper agent assigned a focused task, such as extracting useful context from conversation history.',
+    'Vibe Coding': 'Rapid prototyping by describing changes in natural language and refining the code with AI assistance.',
+    'SEO': 'Search engine optimization: shaping pages and content so people can find them through relevant searches.',
+    'CTR': 'Click-through rate: the share of people who see a result and click it.',
+    'A/B tests': 'A controlled comparison between a version shown to one group and an alternative shown to another.',
+    'ControlNet': 'A Stable Diffusion tool that guides image generation with structural inputs such as edges or pose.',
+    'top 5%': 'The award places her among the top 5% of the news-center operations team.',
+    '5%': 'Reduction in total token usage on long tasks after the context optimization.',
+    '100+ quality Skills': 'The creation Agent helped build a supply of more than 100 reusable Skills.',
+    '100+ Skills': 'The internal evaluation platform covers more than 100 Skills and their different versions.',
+    '50+ posts': 'More than 50 posts were used to apply the content assistant.',
+    '50+': 'More than 50 creators collaborated on this campaign.',
+    '130+': 'More than 130 creators were assessed for the campaign.',
+    '65+': 'More than 65 campaign scripts were reviewed.',
+    '100K+': 'More than 100,000 total views across platforms.',
+    '30%': 'Increase in the script approval rate after refining the creator screening and collaboration process.',
+    '50%': 'Reported growth in overseas users during this period.',
+    '21%': 'Search-result click-through rate in the experiment group; the control group was 18%.',
+    '18%': 'The control group’s search-result click-through rate in the A/B test.',
+    'average readership increasing by approximately 18%': 'Approximate increase in average readership across posts using the assistant.',
+    '4.0%': 'Search-to-order conversion rate before the change.',
+    '4.4%': 'Search-to-order conversion rate after the change.',
+    '135%': 'Growth in the number of creators collaborating with brands after the feature changes.',
+    '25%': 'Month-over-month increase in brand collaboration orders during the campaign period.',
+    '2%': 'Share of the overall creator pool represented by the event’s recommended creators.',
+    '11%': 'Share of order value contributed by the event’s recommended creators.',
+    '400+': 'More than 400 creators received their first brand deal through these activities.',
+    'approximately 18%': 'Approximate increase in average readership across posts using the assistant.',
+    '1.5K': 'Approximately 1,500 followers on the personal Xiaohongshu account.',
+    '7K+': 'More than 7,000 likes and saves across posts on the personal account.',
+    '1.4K': 'Approximately 1,400 likes on the account’s most-liked post.',
+    '60+': 'More than 60 social posts produced during China Open coverage.',
+    'RMB 3 million': 'The total value of client requests supported by the product changes.',
+}
+
 def format_body(body):
-    # Highlight only quantitative evidence already present in the source text.
-    pattern = r"(?<![\w.])(?:RMB 3 million|100K\+|7K\+|1\.5K|1\.4K|100\+|130\+|65\+|60\+|50\+|\d+(?:\.\d+)?%)(?![\w])"
-    return re.sub(pattern, lambda m: '<span class="evidence">'+m.group()+'</span>', e(body))
+    # Keep source wording intact; add unobtrusive, keyboard- and touch-accessible explanations.
+    escaped=e(body)
+    pattern=r"(?<![\w.])(?:"+'|'.join(re.escape(term) for term in sorted(TOOLTIPS,key=len,reverse=True))+r")(?![\w])"
+    def replace(match):
+        term=match.group()
+        explanation=TOOLTIPS[term]
+        format_body.tip_id+=1
+        return (f'<span class="term-tip" tabindex="0" aria-describedby="tip-{format_body.tip_id}">'
+                f'<span class="evidence">{term}</span>'
+                f'<span class="tooltip-pop" id="tip-{format_body.tip_id}" role="tooltip">{e(explanation)}</span></span>')
+    return re.sub(pattern,replace,escaped)
+format_body.tip_id=0
 
 def details(item):
     d=item.get('details')
@@ -57,20 +106,20 @@ def heading(name,title):
     return f'<div class="section-heading"><span class="section-number">{icon(name)}</span><h2>{title}</h2><span class="heading-line"></span><span class="section-index" aria-hidden="true">{number}</span></div>'
 education=''
 for x in c['education']:
-    education+=f'''<article class="education-card"><div class="school-top"><div class="school-identity">{logo(LOGOS[x['short']])}<span class="school-label">{e(x['short'])}</span></div><span class="date">{e(x['date'])}</span></div><h3>{e(x['school'])}</h3><p class="degree">{e(x['degree'])}</p><p class="distinction">{e(x['distinction'])}</p><p class="courses"><strong>Coursework:</strong> {e(x['courses'])}</p></article>'''
+    education+=f'''<article class="education-card"><div class="school-top"><div class="school-identity">{logo(LOGOS[x['short']])}<span class="school-label">{e(x['short'])}</span></div><span class="date">{e(x['date'])}</span></div><h3>{e(x['school'])}</h3><p class="degree">{e(x['degree'])}</p><p class="distinction">{format_body(x['distinction'])}</p><p class="courses"><strong>Coursework:</strong> {e(x['courses'])}</p></article>'''
 experience=''
 for x in c['experience']:
     parts=''
     for i,p in enumerate(x.get('projects',[]),1):
         anchor=['agent-teams','overseas-product'][i-1]
-        parts+=f'''<section class="work-project" id="{anchor}" tabindex="-1"><div class="project-heading"><span class="project-number">PROJECT {i:02}</span><div class="project-title-row"><h4>{e(p['title'])}</h4>{permalink(anchor,p['title'])}</div><p>{e(p['subtitle'])}</p></div><p class="intro">{e(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
+        parts+=f'''<section class="work-project" id="{anchor}" tabindex="-1"><div class="project-heading"><span class="project-number">PROJECT {i:02}</span><div class="project-title-row"><h4>{e(p['title'])}</h4>{permalink(anchor,p['title'])}</div><p>{format_body(p['subtitle'])}</p></div><p class="intro">{e(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
     if 'intro' in x:parts+=f'<p class="intro">{e(x["intro"])}</p>'
     if 'bullets' in x:parts+=bullets(x['bullets'])
     experience+=f'''<article class="experience-entry" id="{ {"Alibaba · Qwen":"qwen-experience", "Xiaohongshu · Pugongying":"creator-platform", "Publicis Groupe":"publicis"}[x["company"]] }"><header class="entry-header"><div class="organization">{logo(LOGOS[x['company']])}<div class="organization-copy"><h3>{e(x['company'])}</h3><p class="entry-role">{e(x['role'])}</p></div></div><span class="date">{e(x['date'])}</span></header>{parts}</article>'''
 projects=''
 for anchor,p in zip(['creator-assistant','china-open','competition-awards'],c['projects']):
     workflow='<div class="project-workflow" aria-label="Assistant workflow"><span>Account history</span><span aria-hidden="true">→</span><span>Audience perspectives</span><span aria-hidden="true">→</span><span>Content feedback</span></div>' if anchor=='creator-assistant' else ''
-    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{e(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{e(p['label'])}</span></header>{workflow}{bullets(p['bullets'])}{details(p)}</article>'''
+    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{e(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(p['bullets'])}{details(p)}</article>'''
 
 sheep_svg=(root/'assets/sheep.svg').read_text().replace('<svg ', '<svg aria-hidden="true" focusable="false" ', 1)
 sheep=f'''<div class="sheep-home"><div class="sheep-companion" hidden><button type="button" class="sheep-project-prompt" hidden>About this project</button><button class="sheep-button" type="button" aria-label="Say hello to the little sheep" aria-describedby="sheep-help"><span class="sheep-bubble" aria-hidden="true"></span>{sheep_svg}<span class="sheep-caption" aria-hidden="true">Say hello</span></button><span id="sheep-help" class="sr-only">Tap to say hello. Double-click me to alternate between a snack and a head pat, stroke my head for a pat, or hold and release for a little hop. Drag me to a new spot, or double-click empty space to grow a tuft of grass for me. I snack and nap while you read.</span><section class="sheep-guide-card" aria-labelledby="sheep-guide-title" hidden><div class="sheep-guide-heading"><span>READ ALONG</span><button type="button" class="sheep-guide-close" aria-label="Close project note">×</button></div><h2 id="sheep-guide-title"></h2><p class="sheep-guide-text"></p><div class="sheep-guide-footer"><span class="sheep-guide-count"></span><button type="button" class="sheep-guide-more">Tell me more</button></div><button type="button" class="sheep-auto" aria-pressed="true">Automatic notes: on</button></section><span class="sr-only sheep-status" role="status" aria-live="polite" aria-atomic="true"></span></div></div>'''
