@@ -74,7 +74,7 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
     get('#beta').rect=id==='beta'?{top:100,bottom:650}:{top:900,bottom:1300};
     window.emit('scroll');tick(0);
   }
-  return {random:v=>randomValue=v,calls,project,get,b,doc,window,motion,tick,jobs,actions,state:()=>b.dataset.state,
+  return {configure:Qsheep=>{doc.emit('sitecontent:update',{detail:{Qsheep}});tick(0);},random:v=>randomValue=v,calls,project,get,b,doc,window,motion,tick,jobs,actions,state:()=>b.dataset.state,
     say:()=>get('.sheep-status').textContent,animations:()=>animationCount,
     hidden:()=>{doc.hidden=true;doc.emit('visibilitychange');},offscreen:()=>observer([{isIntersecting:false}]),
     click:()=>b.emit('click',{detail:0}),
@@ -312,4 +312,46 @@ test('a cancelled or dragged pointer cannot trigger the double-click treat',()=>
 test('a sleeping sheep accepts a double-click snack and reduced motion still accepts both treats',()=>{
  const s=setup();s.tick(30400);doubleClickSheep(s);assert.equal(s.state(),'feeding');
  const r=setup(true);doubleClickSheep(r);assert.equal(r.state(),'feeding');r.tick(4000);doubleClickSheep(r);assert.equal(r.state(),'petting');
+});
+test('JSON messages, captions, speech duration and action order drive live interactions',()=>{
+ const s=setup();s.configure({name:'Little sheep',messages:{feed:'Snack time!',pat:'Lovely!'},captions:{feeding:'Yum'},timing:{speechSeconds:1},actions:{click:'feed',doubleClick:['pat','feed']}});
+ assert.equal(s.b['aria-label'],'Little sheep');s.click();assert.equal(s.say(),'Snack time!');assert.equal(s.get('.sheep-caption').textContent,'Yum');
+ s.tick(1000);assert.equal(s.say(),'');s.tick(3000);doubleClickSheep(s);assert.equal(s.say(),'Lovely!');s.tick(4000);doubleClickSheep(s);assert.equal(s.state(),'feeding');
+});
+test('disabling Qsheep cancels an in-progress drag and all pending activity',()=>{
+ const s=setup(false,true,true);s.down();s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});
+ s.configure({enabled:false});assert.equal(s.get('.sheep-companion').hidden,true);assert.equal(s.jobs.size,0);assert.equal(s.b.dataset.carried,undefined);
+ const n=s.calls.length;s.click();s.tick(60000);assert.equal(s.calls.length,n);
+ s.configure({enabled:true});assert.equal(s.get('.sheep-companion').hidden,false);s.click();assert.ok(s.say());
+});
+test('passive behavior switches suppress wandering, grass, naps and pointer reactions',()=>{
+ const s=setup(false,false,true);s.configure({interactions:{wandering:false,autoGrass:false,autoSleep:false,followPointer:false,stroking:false,hoverGreeting:false}});
+ const start=s.calls.length;for(const x of [60,75,60,75]){s.move(x,20);s.tick(200);}s.b.emit('pointerenter',{pointerType:'mouse'});s.tick(60000);
+ assert.equal(s.state(),'awake');assert.ok(!s.calls.slice(start).some(c=>['roam','look','grass-trip'].includes(c[0])));assert.equal(s.say(),'');assert.equal(s.get('.meadow-grass').hidden,true);
+});
+test('dragging and all explicit gestures can be independently disabled',()=>{
+ const s=setup(false,false,true);s.configure({interactions:{dragging:false},actions:{click:'none',doubleClick:['none'],longPress:'none',blankDoubleClick:'none'}});
+ s.down();s.tick(500);s.doc.emit('pointermove',{pointerId:1,buttons:1,clientX:520,clientY:350});s.up();s.click();doubleClickSheep(s);
+ s.doc.emit('dblclick',{target:{matches:()=>true,closest:()=>null},button:0,clientX:200,clientY:300});
+ assert.equal(s.state(),'awake');assert.equal(s.say(),'');assert.ok(!s.calls.some(c=>['place','feed-spot'].includes(c[0])));
+});
+test('project guide settings support off, manual only, and custom open/close timing',()=>{
+ const s=setup(false,true);s.configure({projectGuide:{enabled:false}});s.project('alpha');s.tick(2000);s.get('.sheep-project-prompt').emit('click');assert.equal(s.get('.sheep-guide-card').hidden,true);assert.equal(s.get('.sheep-project-prompt').hidden,true);
+ s.configure({projectGuide:{automatic:false}});s.project('alpha');s.tick(2000);assert.equal(s.get('.sheep-guide-card').hidden,true);s.get('.sheep-project-prompt').emit('click');assert.equal(s.get('.sheep-guide-card').hidden,false);
+ s.configure({projectGuide:{delaySeconds:2,durationSeconds:1}});s.project('beta');s.tick(1999);assert.equal(s.get('.sheep-guide-card').hidden,true);s.tick(1);assert.equal(s.get('.sheep-guide-card').hidden,false);s.tick(1000);assert.equal(s.get('.sheep-guide-card').hidden,true);
+});
+test('easter egg probability and switch apply to completed meals',()=>{
+ for(const settings of [{probability:0},{enabled:false,probability:1},{probability:1}]){
+  const s=setup(false,false,true);s.random(.5);s.configure({easterEgg:settings});doubleClickSheep(s);s.tick(4000);
+  assert.equal(s.get('.sheep-dropping').hidden,settings.probability===0||settings.enabled===false);
+ }
+});
+test('mistyped fields and unknown actions fall back safely while timing still applies',()=>{
+ const s=setup();s.configure({enabled:'false',messages:{greetings:[]},actions:{click:'invalid',doubleClick:['invalid']},timing:{idleBeforeSleepSeconds:1}});
+ assert.equal(s.get('.sheep-companion').hidden,false);s.click();assert.match(s.say(),/Nice to meet/);s.tick(1000);assert.equal(s.state(),'drowsy');doubleClickSheep(s);assert.equal(s.state(),'feeding');
+});
+test('published JSON configuration loads in the controller and renderer forwards it',()=>{
+ const content=JSON.parse(fs.readFileSync(path.join(__dirname,'../content.json'),'utf8'));
+ assert.ok(content.Qsheep);const s=setup(false,true,true);s.configure(content.Qsheep);s.click();assert.equal(s.say(),content.Qsheep.messages.greetings[0]);
+ assert.match(fs.readFileSync(path.join(__dirname,'../content-editor.js'),'utf8'),/Qsheep: data.Qsheep/);
 });

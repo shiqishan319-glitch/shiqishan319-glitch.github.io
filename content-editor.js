@@ -136,7 +136,7 @@
     if (guide) guide.textContent = JSON.stringify(data.sheepGuide);
     wireTooltips();
     document.documentElement.dataset.contentSource = 'json';
-    document.dispatchEvent(new CustomEvent('sitecontent:update', { detail: { sheepGuide: data.sheepGuide } }));
+    document.dispatchEvent(new CustomEvent('sitecontent:update', { detail: { sheepGuide: data.sheepGuide, Qsheep: data.Qsheep } }));
   }
 
   fetch('content.json', { cache: 'no-store' })

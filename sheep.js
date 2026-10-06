@@ -21,16 +21,64 @@
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
   const timers = new Map();
-  const lines = [
+  const defaultConfig = {
+    name: 'Qsheep', enabled: true,
+    interactions: { followPointer: true, wandering: true, autoGrass: true, autoSleep: true,
+      stroking: true, dragging: true, hoverGreeting: true, readingCelebration: true },
+    actions: { click: 'greet', doubleClick: ['feed', 'pat'], longPress: 'hop', blankDoubleClick: 'feed' },
+    timing: { wanderStartSeconds: 4, wanderIntervalSeconds: 6.5, blinkSeconds: 5.5,
+      idleBeforeSleepSeconds: 20, sleepSeconds: 16, speechSeconds: 4.4,
+      firstGrassMinSeconds: 9, firstGrassMaxSeconds: 12,
+      grassMinSeconds: 22, grassMaxSeconds: 38, grassAfterScrollSeconds: 8 },
+    easterEgg: { enabled: true, probability: 0.01 },
+    projectGuide: { enabled: true, automatic: true, delaySeconds: 1, durationSeconds: 8.5, gapSeconds: 10 },
+    messages: { greetings: [
     'Oh, hello. Nice to meet ewe.', 'Small sheep. Big thoughts.',
     'Just here to keep ewe company.', 'Still no pockets.',
     'Soft wool. Strong opinions on grass.', 'I supervise the daydreaming.'
-  ];
+    ], wake: 'I was thinking. Probably.', pat: 'That’s the spot. Thank ewe.',
+      thirdHello: 'You’ve counted me three times.', tenthHello: 'Ten hellos. Still just one sheep.',
+      hop: 'Soft wool. Springy little hooves.', dropped: 'A new little spot. Thank ewe.',
+      feed: 'A little snack? Thank ewe!', hover: 'Oh! A visitor. Hello, ewe.',
+      grass: 'Fresh grass! Coming for a nibble.', cozy: 'Thank ewe. I’m staying cozy here.',
+      noSpace: 'A little open space for my snack, please?',
+      readingEnd: 'You made it to the end. A tiny standing ovation.' },
+    captions: { awake: 'Say hello', sleeping: 'Daydreaming…', drowsy: 'Getting sleepy',
+      yawning: 'A tiny yawn', landing: 'Back on my hooves', petting: 'More head pats?',
+      feeding: 'Nom, nom', pressed: 'Soft little sheep', waking: 'Oh, hello again' }
+  };
+  // Only known fields are accepted. Missing or mistyped settings retain defaults.
+  const allowedActions = ['greet', 'feed', 'pat', 'hop', 'none'];
+  function normalizeConfig(input) {
+    const merge = (base, value) => Object.fromEntries(Object.entries(base).map(([key, fallback]) => {
+      const supplied = value?.[key];
+      let result = fallback;
+      if (Array.isArray(fallback)) {
+        const values = Array.isArray(supplied) ? supplied.filter(x => typeof x === 'string' && x.trim()) : [];
+        result = values.length ? values : [...fallback];
+      } else if (fallback && typeof fallback === 'object') result = merge(fallback, supplied);
+      else if (typeof supplied === typeof fallback && (typeof supplied !== 'number' || Number.isFinite(supplied))) result = supplied;
+      return [key, result];
+    }));
+    const result = merge(defaultConfig, input);
+    for (const key of Object.keys(result.timing)) result.timing[key] = Math.max(.5, Math.min(3600, result.timing[key]));
+    for (const prefix of ['firstGrass', 'grass']) result.timing[prefix + 'MaxSeconds'] = Math.max(result.timing[prefix + 'MinSeconds'], result.timing[prefix + 'MaxSeconds']);
+    for (const key of ['delaySeconds', 'durationSeconds', 'gapSeconds']) result.projectGuide[key] = Math.max(.5, Math.min(3600, result.projectGuide[key]));
+    result.easterEgg.probability = Math.max(0, Math.min(1, result.easterEgg.probability));
+    for (const key of ['click', 'longPress']) if (!allowedActions.includes(result.actions[key])) result.actions[key] = defaultConfig.actions[key];
+    if (!['feed', 'none'].includes(result.actions.blankDoubleClick)) result.actions.blankDoubleClick = 'feed';
+    result.actions.doubleClick = result.actions.doubleClick.filter(x => allowedActions.includes(x));
+    if (!result.actions.doubleClick.length) result.actions.doubleClick = [...defaultConfig.actions.doubleClick];
+    return result;
+  }
+  let config = normalizeConfig();
+  const ms = key => config.timing[key] * 1000;
+  const grassDelay = prefix => (config.timing[prefix + 'MinSeconds'] + Math.random() * (config.timing[prefix + 'MaxSeconds'] - config.timing[prefix + 'MinSeconds'])) * 1000;
   let state = 'awake', visible = true, engaged = false, clickCount = 0;
   let lastClick = -Infinity, lastWelcome = -Infinity, lastPat = -Infinity, lastPatSpeech = -Infinity;
   let press = null, skipPointerClickUntil = 0, frame = 0, point = null;
   let stroke = null;
-  let nextDoubleAction = 'feed';
+  let doubleActionIndex = 0;
   let guide = null;
   let roamer = null;
   const grass = document.querySelector('.meadow-grass');
@@ -38,7 +86,7 @@
   const dropping = document.querySelector('.sheep-dropping');
   let rareDropDone = false;
   const now = () => performance.now();
-  const active = () => visible && !document.hidden;
+  const active = () => config.enabled && visible && !document.hidden;
   const resting = () => ['drowsy', 'yawning', 'sleeping'].includes(state);
   function cancel(name) {
     clearTimeout(timers.get(name)); timers.delete(name);
@@ -67,44 +115,45 @@
     if (state==='feeding' && next!=='feeding') clearGrass();
     roamer?.stop(); stopAnimations(); delete button.dataset.mood;
     state = next; button.dataset.state = next;
-    mascot.follow = finePointer.matches && next === 'awake' && active();
+    mascot.follow = config.interactions.followPointer && finePointer.matches && next === 'awake' && active();
     button.toggleAttribute('data-sleeping', next === 'sleeping');
-    caption.textContent = ({sleeping:'Daydreaming…',drowsy:'Getting sleepy',yawning:'A tiny yawn',
-      landing:'Back on my hooves',petting:'More head pats?',feeding:'Nom, nom',pressed:'Soft little sheep',waking:'Oh, hello again'}[next] || 'Say hello');
+    caption.textContent = config.captions[next] || config.captions.awake;
   }
   function speak(text, announce = false) {
+    if (!text.trim()) return;
     bubble.textContent = text; button.dataset.talking = 'true';
     status.textContent = announce ? text : '';
-    later('message', 4400, () => { delete button.dataset.talking; status.textContent = ''; });
+    later('message', ms('speechSeconds'), () => { delete button.dataset.talking; status.textContent = ''; });
   }
   function scheduleBlink() {
     if (!engaged || motion.matches || state !== 'awake' || !active() || timers.has('blink')) return;
-    later('blink', 5500, () => {
+    later('blink', ms('blinkSeconds'), () => {
       if (state === 'awake' && !button.dataset.mood && !mascot.scripted) play('blink');
       scheduleBlink();
     });
   }
-  function scheduleWander(delay = 4000) {
-    if (timers.has('wander') || !active() || motion.matches || state !== 'awake') return;
+  function scheduleWander(delay = ms('wanderStartSeconds')) {
+    if (!config.interactions.wandering || timers.has('wander') || !active() || motion.matches || state !== 'awake') return;
     later('wander', delay, () => {
       if (!mascot.scripted && !guide?.isOpen()) { if (pasture) visitGrass(); else roamer?.wander(); }
       // Retry after blocked routes or an overlapping blink; a single miss cannot strand it.
-      scheduleWander(6500);
+      scheduleWander(ms('wanderIntervalSeconds'));
     });
   }
   function idleLater() {
     cancel('idle');
     if (!engaged || state !== 'awake' || !active()) return;
     scheduleWander();
-    later('idle', 20000, () => {
+    if (!config.interactions.autoSleep) return;
+    later('idle', ms('idleBeforeSleepSeconds'), () => {
       if (guide?.isOpen()) { idleLater(); return; }
       if (pasture) { visitGrass(); idleLater(); return; }
       setState('drowsy'); play('drowsy');
       later('state', 4000, yawnAndSleep);
     });
   }
-  function scheduleGrass(delay=22000+Math.random()*16000) {
-    if (!grass || timers.has('grow-grass') || pasture || !active() || motion.matches) return;
+  function scheduleGrass(delay=grassDelay('grass')) {
+    if (!config.interactions.autoGrass || !grass || timers.has('grow-grass') || pasture || !active() || motion.matches) return;
     later('grow-grass',delay,growGrass);
   }
   function clearGrass() {
@@ -147,8 +196,8 @@
     if (dropping) dropping.hidden=true;
   }
   function maybeLeaveDropping() {
-    // A silent 1% surprise after a completed meal, at most once per page visit.
-    if (!dropping || rareDropDone || motion.matches || Math.random()>=.01) return;
+    // At most once per page visit, and only after a completed meal.
+    if (!config.easterEgg.enabled || !dropping || rareDropDone || motion.matches || Math.random()>=config.easterEgg.probability) return;
     rareDropDone=true;
     const b=roamer.bounds();
     const x=roamer.x+b.width*(root.classList.contains('faces-left') ? .78 : .22);
@@ -179,14 +228,14 @@
     setState('yawning');
     play('sleep', () => {
       setState('sleeping');
-      later('auto-wake', 16000, () => { setState('waking'); play('wake', awake); });
+      later('auto-wake', ms('sleepSeconds'), () => { setState('waking'); play('wake', awake); });
     });
   }
   function nod() { play('talk', () => { if (motion.matches) play('rest'); }); }
   function hop() { play('hop', () => { if (motion.matches) play('rest'); }); }
   function wakeGreeting() {
     engaged = true; setState('waking');
-    speak('I was thinking. Probably.', true);
+    speak(config.messages.wake, true);
     play('wake', awake);
   }
   function pet(announce = false) {
@@ -194,7 +243,7 @@
     if (state === 'pressed') return;
     engaged = true; lastPat = now(); setState('petting');
     if (announce || now() - lastPatSpeech > 8000) {
-      speak('That’s the spot. Thank ewe.', announce); lastPatSpeech = now();
+      speak(config.messages.pat, announce); lastPatSpeech = now();
     }
     play('pat', awake);
   }
@@ -204,13 +253,13 @@
     const fast = now() - lastClick < 600; lastClick = now();
     engage(); awake(); clickCount++;
     if (clickCount === 3) {
-      speak('You’ve counted me three times.', true); hop();
+      speak(config.messages.thirdHello, true); hop();
     } else if (clickCount === 10) {
-      speak('Ten hellos. Still just one sheep.', true); hop();
+      speak(config.messages.tenthHello, true); hop();
     } else if (fast) {
       pet(true);
     } else {
-      speak(lines[(clickCount - 1) % lines.length], true);
+      speak(config.messages.greetings[(clickCount - 1) % config.messages.greetings.length], true);
       button.dataset.mood = 'hello';
       if (clickCount % 4 === 0) hop(); else nod();
     }
@@ -218,7 +267,7 @@
   }
   function bounce() {
     engaged = true; awake();
-    speak('Soft wool. Springy little hooves.', true);
+    speak(config.messages.hop, true);
     hop();
   }
   function releasePress(cancelled = false, revert = false) {
@@ -232,8 +281,8 @@
     if (state === 'pressed') {
       if (prior.dragging && !cancelled) {
         setState('landing'); play('land',awake);
-        speak('A new little spot. Thank ewe.',true);
-      } else if (prior.held && !cancelled) bounce();
+        speak(config.messages.dropped,true);
+      } else if (prior.held && !cancelled) { awake(); runAction(config.actions.longPress); }
       else if (prior.wasResting && !cancelled) {
         // Preserve click-to-wake while still accepting drags from every sleeping pose.
         setState('sleeping');
@@ -261,6 +310,7 @@
     if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return;
     const dx=event.clientX-press.x,dy=event.clientY-press.y;
     if (!press.dragging && Math.hypot(dx,dy)<(press.pointerType==='touch'?12:8)) return;
+    if (!config.interactions.dragging) return;
     if (!press.dragging) {
       press.dragging=true; cancel('hold');liftSheep();
     }
@@ -278,28 +328,31 @@
     setState('awake'); mascot.follow = false; mascot.frame('idle'); delete button.dataset.talking; status.textContent = '';
   }
   root.hidden = false; setState('awake'); engage();
+  function runAction(action) {
+    if (!active() || action === 'none') return;
+    if (action === 'greet') { greet(); return; }
+    guide?.interacted(); engaged = true; clearGrass(); awake(); lastClick = now();
+    if (action === 'feed') { speak(config.messages.feed, true); snack(true); }
+    else if (action === 'pat') pet(true);
+    else if (action === 'hop') bounce();
+  }
   button.addEventListener('click', event => {
     guide?.interacted();
     if ((event.detail !== 0 || event.pointerType) && now() < skipPointerClickUntil) return;
-    if (event.detail === 0 && !event.pointerType) { greet(); return; }
+    if (event.detail === 0 && !event.pointerType) { runAction(config.actions.click); return; }
     // Wait briefly so a double-click does not also deliver two greetings.
     if (event.detail >= 2) { cancel('single-click'); return; }
-    later('single-click',320,greet);
+    later('single-click',320,()=>runAction(config.actions.click));
   });
   button.addEventListener('dblclick', event => {
     if (event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
       || press || !active() || now() < skipPointerClickUntil) return;
-    cancel('single-click'); guide?.interacted(); engaged=true;
-    clearGrass(); awake(); lastClick=now();
-    if (nextDoubleAction === 'feed') {
-      nextDoubleAction='pat';
-      speak('A little snack? Thank ewe!',true); snack(true);
-    } else {
-      nextDoubleAction='feed'; pet(true);
-    }
+    cancel('single-click');
+    runAction(config.actions.doubleClick[doubleActionIndex++ % config.actions.doubleClick.length]);
   });
   button.addEventListener('pointerdown', event => {
-    if (!event.isPrimary || event.button !== 0 || press || !roamer) return;
+    if (!event.isPrimary || event.button !== 0 || press || !roamer || !active()
+      || (!config.interactions.dragging && config.actions.longPress === 'none')) return;
     event.preventDefault();
     cancel('single-click');
     const wasResting=resting() || state==='waking';
@@ -315,7 +368,7 @@
     svg.style.setProperty('--carry-x',grab.x+'px');svg.style.setProperty('--carry-y',grab.y+'px');
     button.focus({preventScroll:true});
     try { button.setPointerCapture(event.pointerId); } catch { /* Document listeners are the fallback. */ }
-    later('hold',400,()=>{if(press && !press.dragging){press.held=true;liftSheep();}});
+    if (config.actions.longPress !== 'none') later('hold',400,()=>{if(press && !press.dragging){press.held=true;liftSheep();}});
   });
   // Capture plus document-level routing keeps fast drags and release outside the SVG reliable.
   document.addEventListener('pointermove',movePress,{passive:true});
@@ -335,8 +388,8 @@
     cancel('look-away');
     if (event.pointerType !== 'mouse' || !finePointer.matches || resting() || grazingTrip) return;
     roamer?.stop(); engage();
-    if (state === 'awake' && !button.dataset.talking && now() - lastWelcome > 15000) {
-      lastWelcome = now(); speak('Oh! A visitor. Hello, ewe.');
+    if (config.interactions.hoverGreeting && state === 'awake' && !button.dataset.talking && now() - lastWelcome > 15000) {
+      lastWelcome = now(); speak(config.messages.hover);
       if (!mascot.scripted) nod();
     }
   });
@@ -361,8 +414,8 @@
   document.addEventListener('pointermove', event => {
     if (event.pointerType !== 'mouse' || !finePointer.matches || !active() || event.buttons) return;
     point = {x:event.clientX,y:event.clientY};
-    detectStroke(point.x, point.y);
-    if (motion.matches || resting() || state !== 'awake') return;
+    if (config.interactions.stroking) detectStroke(point.x, point.y);
+    if (!config.interactions.followPointer || motion.matches || resting() || state !== 'awake') return;
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
@@ -408,9 +461,30 @@
     rest: () => { grazingTrip=false; stopAnimations(); play('rest'); }
 
   });
-  cancel('grow-grass');scheduleGrass(9000+Math.random()*3000);
-  addEventListener('scroll',()=>{clearDropping();if(pasture)clearGrass();scheduleGrass(8000);},{passive:true});
-  addEventListener('resize',()=>{clearDropping();if(pasture)clearGrass();scheduleGrass(8000);});
+  document.addEventListener('sitecontent:update', event => {
+    // Stop old timers before applying settings, including a meal/drag in progress.
+    quiet(); config = normalizeConfig(event.detail?.Qsheep); doubleActionIndex = 0;
+    root.hidden = !config.enabled;
+    button.setAttribute('aria-label', config.name);
+    const help = document.querySelector('#sheep-help');
+    if (help) {
+      const labels = { greet: 'say hello', feed: 'offer a snack', pat: 'give a head pat', hop: 'see a little hop' };
+      const hints = [];
+      if (labels[config.actions.click]) hints.push(`Tap to ${labels[config.actions.click]}.`);
+      const doubleActions = config.actions.doubleClick.map(action => labels[action] || 'do nothing');
+      if (doubleActions.some(action => action !== 'do nothing')) hints.push(`Double-click to ${doubleActions.join(', then ')}.`);
+      if (labels[config.actions.longPress]) hints.push(`Hold and release to ${labels[config.actions.longPress]}.`);
+      if (config.interactions.dragging) hints.push('Drag me to a new spot.');
+      if (config.interactions.stroking) hints.push('Stroke my head for a pat.');
+      if (config.actions.blankDoubleClick === 'feed') hints.push('Double-click empty space to grow grass.');
+      help.textContent = hints.join(' ');
+    }
+    guide?.configure();
+    if (active()) { awake(); engage(); cancel('grow-grass'); scheduleGrass(grassDelay('firstGrass')); }
+  });
+  cancel('grow-grass');scheduleGrass(grassDelay('firstGrass'));
+  addEventListener('scroll',()=>{clearDropping();if(pasture)clearGrass();scheduleGrass(ms('grassAfterScrollSeconds'));},{passive:true});
+  addEventListener('resize',()=>{clearDropping();if(pasture)clearGrass();scheduleGrass(ms('grassAfterScrollSeconds'));});
   // Double-click only genuine empty space; text selection and real controls keep their meaning.
   document.addEventListener('dblclick', event => {
     const target=event.target;
@@ -418,26 +492,26 @@
       || root.contains(target) || !target.matches('body,main,section,article,div')
       || target.closest('a,button,input,textarea,select,summary,[contenteditable],header,nav,footer')
       || window.getSelection()?.toString().trim()) return;
-    if (press || !active()) return;
+    if (config.actions.blankDoubleClick === 'none' || press || !active()) return;
     guide?.interacted(); engaged=true; awake();
     const spot=grass && roamer.feedSpot(event.clientX,event.clientY);
     if (spot) {
       plantGrass(spot);
-      speak('Fresh grass! Coming for a nibble.',true);
+      speak(config.messages.grass,true);
     } else {
-      speak(motion.matches ? 'Thank ewe. I’m staying cozy here.' : 'A little open space for my snack, please?',true); nod();
+      speak(motion.matches ? config.messages.cozy : config.messages.noSpace,true); nod();
     }
   });
   let finishedReading=false;
   addEventListener('scroll', () => {
     cancel('reading-end');
     const footer=document.querySelector('footer');
-    if (finishedReading || !footer || footer.getBoundingClientRect().bottom>innerHeight+10) return;
+    if (!config.interactions.readingCelebration || !active() || finishedReading || !footer || footer.getBoundingClientRect().bottom>innerHeight+10) return;
     later('reading-end',1800,()=>{
       if (finishedReading || footer.getBoundingClientRect().bottom>innerHeight+10 || press
         || guide?.isOpen() || state!=='awake') return;
       finishedReading=true; awake();
-      speak('You made it to the end. A tiny standing ovation.');hop();
+      speak(config.messages.readingEnd);hop();
     });
   },{passive:true});
   function setupProjectGuide() {
@@ -457,7 +531,7 @@
     const shortcut = root.querySelector('.sheep-project-prompt');
     const autoButton = root.querySelector('.sheep-auto');
     const seen = new Set();
-    let current = null, index = 0, automatic = true, pinned = false, updateFrame = 0;
+    let current = null, index = 0, automatic = config.projectGuide.automatic, pinned = false, updateFrame = 0;
     let lastAuto = -Infinity, holdUntil = 0;
     function hide() {
       cancel('guide-close');
@@ -476,7 +550,7 @@
       more.textContent = index === current.notes.length - 1 ? 'Back to overview' : 'Tell me more';
     }
     function show(manual = false) {
-      if (!current || !root.classList.contains('is-docked')) return;
+      if (!active() || !config.projectGuide.enabled || !current || !root.classList.contains('is-docked')) return;
       cancel('guide-open'); cancel('message'); delete button.dataset.talking;
       engaged = true; awake(); nod();
       index = 0; pinned = manual; render(); card.hidden = false; seen.add(current.id);
@@ -486,13 +560,13 @@
       } else {
         // Automatic notes are visual only, with no unsolicited screen-reader announcement.
         status.textContent = ''; lastAuto = now();
-        later('guide-close', 8500, () => { if (!pinned) hide(); });
+        later('guide-close', config.projectGuide.durationSeconds * 1000, () => { if (!pinned) hide(); });
       }
     }
     function scheduleNote() {
-      if (!automatic || !current || seen.has(current.id) || timers.has('guide-open') || !active()) return;
+      if (!config.projectGuide.enabled || !automatic || !current || seen.has(current.id) || timers.has('guide-open') || !active()) return;
       const id = current.id;
-      const delay = Math.max(1000, lastAuto + 10000 - now(), holdUntil - now());
+      const delay = Math.max(config.projectGuide.delaySeconds * 1000, lastAuto + config.projectGuide.gapSeconds * 1000 - now(), holdUntil - now());
       later('guide-open', delay, () => {
         if (!automatic || current?.id !== id || seen.has(id)) return;
         if (['pressed','petting','feeding','waking','landing'].includes(state)) {
@@ -504,6 +578,9 @@
     function update() {
       updateFrame = 0;
       if (document.hidden) return;
+      if (!config.enabled || !config.projectGuide.enabled) {
+        shortcut.hidden = true; cancel('guide-open'); hide(); return;
+      }
       const headerBottom = document.querySelector('.header-shell').getBoundingClientRect().bottom;
       const docked = hero.getBoundingClientRect().bottom <= headerBottom + 16;
       const changedDock = root.classList.contains('is-docked') !== docked;
@@ -556,6 +633,13 @@
     if ('ResizeObserver' in window) new ResizeObserver(requestUpdate).observe(document.querySelector('main'));
     update();
     return {
+      configure() {
+        automatic = config.projectGuide.automatic;
+        autoButton.hidden = !config.projectGuide.enabled;
+        autoButton.setAttribute('aria-pressed', String(automatic));
+        autoButton.textContent = `Automatic notes: ${automatic ? 'on' : 'off'}`;
+        cancel('guide-open'); hide(); requestUpdate();
+      },
       pause() { cancel('guide-open'); hide(); cancelAnimationFrame(updateFrame); updateFrame = 0; },
       interacted() { holdUntil = now() + 10000; cancel('guide-open'); hide(); },
       isOpen() { return !card.hidden; },
