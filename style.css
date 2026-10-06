@@ -173,10 +173,8 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 /* Hover or keyboard/touch focus reveals short definitions without expanding the layout. */
 .term-tip{position:relative;display:inline;cursor:help;text-decoration:underline dotted #9a89aa;text-decoration-thickness:1px;text-underline-offset:3px;border-radius:2px}
 .term-tip:focus-visible{outline:2px solid #b7a6c8;outline-offset:3px}
-.tooltip-pop{position:absolute;left:0;bottom:calc(100% + 9px);z-index:20;width:max-content;max-width:min(270px,calc(100vw - 32px));padding:9px 12px;border:1px solid #ded5e5;border-radius:9px;background:#fffdf9;box-shadow:0 6px 22px #48355418;color:#4d5d51;font:12px/1.55 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:0;text-align:left;text-decoration:none;white-space:normal;opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .14s ease,transform .14s ease,visibility .14s;pointer-events:none}
+.tooltip-pop{position:fixed;left:var(--tip-x,12px);top:var(--tip-y,12px);right:auto;bottom:auto;z-index:20;width:max-content;max-width:min(270px,calc(100vw - 32px));padding:9px 12px;border:1px solid #ded5e5;border-radius:9px;background:#fffdf9;box-shadow:0 6px 22px #48355418;color:#4d5d51;font:12px/1.55 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:0;text-align:left;text-decoration:none;white-space:normal;opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .14s ease,transform .14s ease,visibility .14s;pointer-events:none}
 .term-tip:hover .tooltip-pop,.term-tip:focus .tooltip-pop,.term-tip:focus-within .tooltip-pop{opacity:1;visibility:visible;transform:none}
-@media(max-width:760px){.tooltip-pop{position:fixed;left:12px;right:12px;bottom:12px;width:auto;max-width:none;padding:11px 14px;border-radius:12px;box-shadow:0 8px 30px #273c2c24;font-size:13px;transform:translateY(5px)}}
+@media(max-width:760px){.tooltip-pop{max-width:min(270px,calc(100vw - 24px));padding:10px 12px;border-radius:11px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.tooltip-pop{transition:none}}
 @media print{.term-tip{text-decoration:none}.tooltip-pop{display:none}}
-
-.term-tip:hover,.term-tip:focus{z-index:10}

@@ -82,3 +82,31 @@ if (copyButton && navigator.clipboard && window.isSecureContext) {
     }, 3500);
   });
 }
+
+// Keep each explanation beside the pointer, or beside its term for keyboard focus.
+function positionTooltip(term, x, y) {
+  const tip = term.querySelector('.tooltip-pop');
+  if (!tip) return;
+  const bounds = tip.getBoundingClientRect();
+  const gap = 14, edge = 10;
+  let left = x + gap;
+  let top = y + gap;
+  if (left + bounds.width > innerWidth - edge) left = x - bounds.width - gap;
+  if (top + bounds.height > innerHeight - edge) top = y - bounds.height - gap;
+  left = Math.max(edge, Math.min(left, innerWidth - bounds.width - edge));
+  top = Math.max(edge, Math.min(top, innerHeight - bounds.height - edge));
+  tip.style.setProperty('--tip-x', `${left}px`);
+  tip.style.setProperty('--tip-y', `${top}px`);
+}
+for (const term of document.querySelectorAll('.term-tip')) {
+  term.addEventListener('pointerenter', event => {
+    if (event.pointerType === 'mouse') positionTooltip(term, event.clientX, event.clientY);
+  });
+  term.addEventListener('pointermove', event => {
+    if (event.pointerType === 'mouse') positionTooltip(term, event.clientX, event.clientY);
+  });
+  term.addEventListener('focus', () => {
+    const rect = term.getBoundingClientRect();
+    positionTooltip(term, rect.right + 4, rect.top + rect.height / 2);
+  });
+}
