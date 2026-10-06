@@ -1,177 +1,205 @@
 {
-  "name": "Qishan Shi",
-  "email": "shiqishan319@gmail.com",
-  "role": "AI Product · Agents & Creator Tools",
-  "intro": "Creator product intern at Qwen and a social anthropology master’s student at LSE. My work focuses on AI agents, evaluation, and tools for creators.",
+  "editorGuide": {
+    "purpose": "Edit this file to update the website. Keep quotation marks, commas, brackets, and field names intact.",
+    "format": "Use **words** for green emphasis. Use [[visible words|short explanation]] for a hover explanation.",
+    "tip": "To add a bullet, copy an existing object inside the relevant bullets array. Keep the existing id fields unchanged; they connect the content to the page layout."
+  },
+  "site": {
+    "name": "Qishan Shi",
+    "email": "shiqishan319@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/qishan-shi-373b38298/",
+    "github": "https://github.com/shiqishan319-glitch",
+    "cv": "assets/Qishan-Shi-CV.pdf"
+  },
+  "hero": {
+    "eyebrow": "AI Product · Agents & Creator Tools",
+    "firstName": "Qishan",
+    "lastName": "Shi",
+    "intro": "Creator product intern at Qwen and a social anthropology master’s student at LSE. My work focuses on AI agents, evaluation, and tools for creators."
+  },
   "education": [
     {
-      "school": "London School of Economics and Political Science",
-      "short": "LSE",
-      "degree": "Master’s studies · Social Anthropology",
+      "schoolLabel": "LSE",
       "date": "Sep 2025 – Dec 2026 (expected)",
+      "school": "London School of Economics and Political Science",
+      "degree": "Master’s studies · Social Anthropology",
       "distinction": "IELTS 7.0 · Speaking 7.0",
-      "courses": "Psychological Anthropology (Distinction), Anthropology of Religion (Distinction), Digital Anthropology, Gender and Kinship, Anthropological Research Methods."
+      "courses": "**Coursework:** Psychological Anthropology (Distinction), Anthropology of Religion (Distinction), Digital Anthropology, Gender and Kinship, Anthropological Research Methods."
     },
     {
-      "school": "Communication University of China",
-      "short": "CUC",
-      "degree": "Bachelor’s degree · Communication",
+      "schoolLabel": "CUC",
       "date": "Sep 2021 – Jul 2025",
+      "school": "Communication University of China",
+      "degree": "Bachelor’s degree · Communication",
       "distinction": "GPA 3.87 / 4.0 · Ranked 1 / 56 · National Scholarship",
-      "courses": "Global Communication, Data Visualization, Introduction to Statistics, Digital Media Marketing Strategy, Journalism Ethics and Media Regulation, Cross-cultural Multimedia News Editing."
+      "courses": "**Coursework:** Global Communication, Data Visualization, Introduction to Statistics, Digital Media Marketing Strategy, Journalism Ethics and Media Regulation, Cross-cultural Multimedia News Editing."
     }
   ],
   "experience": [
     {
+      "id": "qwen-experience",
       "company": "Alibaba · Qwen",
       "role": "Creator Product Intern · Agent",
       "date": "Jun 2026 – Present",
+      "intro": "Built creator-product capabilities across AI Agents, evaluation, and overseas product exploration.",
       "projects": [
         {
-          "title": "Qwen Create Agent Teams",
-          "subtitle": "A multi-agent system for end-to-end video creation",
+          "id": "agent-teams",
+          "number": "PROJECT 01",
+          "title": "Qwen Create [[Agent Teams|A group of coordinated Agents that work together across steps in a video-creation task.]]",
+          "subtitle": "A [[multi-agent system|A system where multiple specialized AI agents coordinate to complete a larger task.]] for end-to-end video creation",
           "intro": "Built Skill creation and evaluation capabilities, with Runtime improvements for reusable video workflows.",
           "bullets": [
-            [
-              "Skill creation Agent",
-              "Helped launch an Agent that turns canvas workflows into editable Skill drafts and uses multimodal understanding to break down creative works. Helped build a supply of 100+ quality Skills."
-            ],
-            [
-              "Skill evaluation system",
-              "Built layered test sets, evaluation criteria, and an automated platform with Skill-specific instructions and controlled comparisons. Launched internally, covering 100+ Skills and their versions."
-            ],
-            [
-              "Runtime optimization & model adaptation",
-              "Designed a Subagent to compress conversation history, reducing long-task token usage by 5%. Updated Skill interfaces and model routing for compatibility with Wan 3.0 and Qwen Image 3.0."
-            ]
+            {
+              "label": "[[Skill|A reusable instruction set that helps an Agent perform a task consistently.]] creation [[Agent|An AI system that can work toward a goal and use tools to complete task steps.]]",
+              "body": "Helped launch an [[Agent|An AI system that can work toward a goal and use tools to complete task steps.]] that turns canvas workflows into editable [[Skill|A reusable instruction set that helps an Agent perform a task consistently.]] drafts and uses [[multimodal understanding|Interpreting more than one type of input, such as video imagery and text.]] to break down creative works. Helped build a supply of [[100+ quality Skills|The creation Agent helped build a supply of more than 100 reusable Skills.]]."
+            },
+            {
+              "label": "[[Skill|A reusable instruction set that helps an Agent perform a task consistently.]] evaluation system",
+              "body": "Built layered test sets, evaluation criteria, and an automated platform with [[Skill-specific instructions|Test instructions tailored to each Skill’s capabilities and use cases.]] and [[controlled comparisons|Comparisons that hold model and tool conditions steady to isolate the effect of Skill use or version.]]. Launched internally, covering [[100+ Skills|The internal evaluation platform covers more than 100 Skills and their different versions.]] and their versions."
+            },
+            {
+              "label": "[[Runtime|The execution layer that manages an Agent’s context, tools, and task flow.]] optimization & model adaptation",
+              "body": "Designed a [[Subagent|A helper agent assigned a focused task, such as extracting useful context from conversation history.]] to compress conversation history, reducing long-task token usage by [[5%|Reduction in total token usage on long tasks after the context optimization.]]. Updated [[Skill|A reusable instruction set that helps an Agent perform a task consistently.]] interfaces and [[model routing|Directing a generation request to the selected model through the right interface.]] for compatibility with [[Wan 3.0|A newly connected generation model; existing Skills were adapted to use it.]] and [[Qwen Image 3.0|A newly connected image generation model; existing Skills were adapted to use it.]]."
+            }
           ],
-          "details": {
-            "label": "Inside the evaluation approach",
-            "text": "Generated test instructions for each Skill’s capabilities and use cases. For each instruction, controlled model and tool conditions to compare no-Skill and different Skill-version results. Assessed node quality and end-to-end outcomes, then traced failures through tool calls and node outputs."
+          "notebook": {
+            "trail": ["Skill capability", "Test instruction", "Controlled comparison"],
+            "stages": [
+              ["01", "The problem", "A generic prompt cannot tell whether a Skill works in the situations it was designed for."],
+              ["02", "The judgment", "Write instructions around each Skill’s capability and use case, then hold model and tool conditions constant."],
+              ["03", "The result", "An internal evaluation system now covers 100+ Skills and their versions, making iteration traceable."]
+            ]
           }
         },
         {
+          "id": "overseas-product",
+          "number": "PROJECT 02",
           "title": "Qwen Create: overseas product exploration",
-          "subtitle": "North American demand validation & growth-feature planning",
+          "subtitle": "[[North American demand validation|Research into whether North American users have relevant needs and whether the product can meet them.]] & growth-feature planning",
           "intro": "Explored market entry, acquisition features, and website planning for overseas growth.",
           "bullets": [
-            [
-              "Market selection & entry strategy",
-              "Evaluated organic traffic, willingness and ability to pay, and acquisition costs to select North America as the initial market."
-            ],
-            [
-              "Overseas marketing evaluation",
-              "Participated in Agent evaluation for North American and Latin American marketing scenarios. Authored the report on intent understanding, scripts, visuals, and editing, identifying strengths and improvement areas."
-            ],
-            [
-              "Search demand & SEO analysis",
-              "Prioritized background removal and AI face swap using search demand and conversion potential. Identified features better suited to display ads than search; worked with growth teams as overseas users grew by 50%."
-            ],
-            [
-              "Website MVP design",
-              "Mapped search intent to product capabilities. Planned feature and scenario pages with examples, input requirements, and clear entry points."
+            {
+              "label": "Market selection & entry strategy",
+              "body": "Evaluated [[organic traffic|Visits that come from unpaid search results rather than advertisements.]], [[willingness and ability to pay|Whether potential customers both want the product enough to pay and have the capacity to do so.]], and [[acquisition costs|The cost of attracting a new user or customer.]] to select North America as the initial market."
+            },
+            {
+              "label": "Overseas marketing evaluation",
+              "body": "Participated in [[Agent|An AI system that can work toward a goal and use tools to complete task steps.]] evaluation for North American and Latin American marketing scenarios. Authored the report on intent understanding, scripts, visuals, and editing, identifying strengths and improvement areas."
+            },
+            {
+              "label": "Search demand & [[SEO|Search engine optimization: shaping pages and content so people can find them through relevant searches.]] analysis",
+              "body": "Prioritized background removal and AI face swap using search demand and conversion potential. Identified features better suited to display ads than search; worked with growth teams as overseas users grew by [[50%|Reported growth in overseas users during this period.]]."
+            },
+            {
+              "label": "Website [[MVP|Minimum viable product: an early version focused on validating core product value.]] design",
+              "body": "Mapped [[search intent|What someone is trying to find or accomplish with a search query.]] to product capabilities. Planned feature and scenario pages with examples, input requirements, and clear entry points."
+            }
+          ],
+          "notebook": {
+            "trail": ["Agent performance", "User demand", "Acquisition feature"],
+            "stages": [
+              ["01", "The problem", "Overseas growth cannot begin with available features alone: the product needs both a credible use case and demand."],
+              ["02", "The judgment", "Evaluate North American and Latin American marketing scenarios, then pair product feasibility with search and conversion signals."],
+              ["03", "The result", "The work prioritized background removal and AI face swap, while separating search-led opportunities from display-ad creative."]
             ]
-          ]
+          }
         }
       ]
     },
     {
+      "id": "creator-platform",
       "company": "Xiaohongshu · Pugongying",
       "role": "Creator Product Intern · Commercial Product Strategy",
       "date": "Feb – Jun 2024",
       "intro": "Improved creator discovery, brand collaboration, and creator monetization.",
       "bullets": [
-        [
-          "Creator search & matching",
-          "Contributed to periodic and time-sensitive creator labels and cross-category semantic matching improvements. A/B tests showed 21% search CTR versus 18% in the control; post-search order conversion rose from 4.0% to 4.4%."
-        ],
-        [
-          "Platform feature improvements",
-          "Helped turn client requirements into pricing, collaboration, scheduling, and invitation features after validating rule boundaries and risks. Supported requests worth over RMB 3 million; collaborating creators grew by 135%."
-        ],
-        [
-          "Creator opportunity matching",
-          "Organized 618 Spark Gala and home-renovation creator recruitment. Orders grew 25% month over month; recommended creators made up 2% of the pool and 11% of order value. Helped 400+ creators land their first brand deal."
-        ]
+        {
+          "label": "Creator search & matching",
+          "body": "Contributed to [[periodic and time-sensitive creator labels|Tags that surface creators for seasonal topics, scheduled events, or interests that change over time.]] and cross-category [[semantic matching|Matching creators and opportunities by meaning and relevance, beyond exact keyword overlap.]] improvements. [[A/B tests|A controlled comparison between a version shown to one group and an alternative shown to another.]] showed [[21%|Search-result click-through rate in the experiment group; the control group was 18%.]] search [[CTR|Click-through rate: the share of people who see a result and click it.]] versus [[18%|The control group’s search-result click-through rate in the A/B test.]] in the control; [[post-search order conversion|The share of users who place an order after using creator search.]] rose from [[4.0%|Search-to-order conversion rate before the change.]] to [[4.4%|Search-to-order conversion rate after the change.]]."
+        },
+        {
+          "label": "Platform feature improvements",
+          "body": "Helped turn client requirements into pricing, collaboration, scheduling, and invitation features after validating rule boundaries and risks. Supported requests worth over [[RMB 3 million|The total value of client requests supported by the product changes.]]; collaborating creators grew by [[135%|Growth in the number of creators collaborating with brands after the feature changes.]]."
+        },
+        {
+          "label": "Creator opportunity matching",
+          "body": "Organized 618 Spark Gala and home-renovation creator recruitment. Orders grew [[25%|Month-over-month increase in brand collaboration orders during the campaign period.]] month over month; recommended creators made up [[2%|Share of the overall creator pool represented by the event’s recommended creators.]] of the pool and [[11%|Share of order value contributed by the event’s recommended creators.]] of [[order value|The monetary value of orders attributed to the recommended creators.]]. Helped [[400+|More than 400 creators received their first brand deal through these activities.]] creators land their first brand deal."
+        }
       ]
     },
     {
+      "id": "publicis",
       "company": "Publicis Groupe",
       "role": "Brand Operations Intern",
       "date": "Aug – Nov 2023",
       "intro": "Supported Changi Airport and Pepsi through digital proposals and creator campaigns.",
       "bullets": [
-        [
-          "Digital product design",
-          "Designed digital features for Changi Airport’s China proposal. Used mobile-platform habits and shopping behavior to propose platform-based touchpoints in place of website-led traffic; adopted in the final proposal."
-        ],
-        [
-          "Creator campaigns",
-          "Completed 130+ creator assessments, 65+ script reviews, and 50 collaborations in one month for Pepsi. Refined screening and collaboration processes, improving script approval by 30%."
-        ]
+        {
+          "label": "Digital product design",
+          "body": "Designed digital features for Changi Airport’s China proposal. Used mobile-platform habits and shopping behavior to propose platform-based touchpoints in place of website-led traffic; adopted in the final proposal."
+        },
+        {
+          "label": "Creator campaigns",
+          "body": "Completed [[130+|More than 130 creator assessments were completed in one month.]] creator assessments, [[65+|More than 65 scripts were reviewed in one month.]] script reviews, and 50 collaborations in one month for Pepsi. Refined screening and collaboration processes, improving script approval by [[30%|Increase in script approval rate after improving the collaboration process.]]."
+        }
       ]
     }
   ],
-  "projects": [
-    {
+  "projects": {
+    "creatorAssistant": {
       "title": "Creator content diagnosis & topic co-creation assistant",
       "label": "Personal project · Vibe Coding",
-      "bullets": [
-        [
-          "",
-          "Built a multi-agent assistant that uses account history and reader feedback to help smaller creators find repeatable topics and content structures. Applied to 50+ posts, with average readership increasing by approximately 18%."
+      "workflow": ["Account history", "Audience perspectives", "Content feedback"],
+      "body": "Built a multi-agent assistant that uses account history and reader feedback to help smaller creators find repeatable topics and content structures. Applied to [[50+ posts|More than 50 posts were used to apply the content assistant.]], with [[average readership increasing by approximately 18%|Approximate increase in average readership across posts using the assistant.]].",
+      "notebook": {
+        "trail": ["Account history", "Audience signals", "Topic & structure"],
+        "stages": [
+          ["01", "The problem", "Some creators have successful posts but no reliable way to turn those signals into the next strong idea."],
+          ["02", "The judgment", "Use account history and reader feedback, then let multiple Agents simulate audience reactions and discuss candidate content."],
+          ["03", "The result", "Applied across 50+ posts, the assistant helped raise average readership by approximately 18%."]
         ]
-      ],
-      "details": {
-        "label": "How the assistant works",
-        "text": "Connects account diagnosis, topic generation, and structural review. Multiple agents simulate different audience perspectives, discuss candidate content, and summarize feedback for the creator. The project grew out of personal publishing and creator-consulting experience."
       }
     },
-    {
+    "chinaOpen": {
       "title": "China Open",
       "label": "Overseas social media operations",
-      "bullets": [
-        [
-          "English-language interviews & communication",
-          "Interviewed Zheng Qinwen, Jannik Sinner, and other players in English. Produced 60+ social posts across international and Chinese platforms; received the news center operations team’s Gold Award (top 5%)."
-        ]
-      ]
+      "bulletLabel": "English-language interviews & communication",
+      "body": "Interviewed Zheng Qinwen, Jannik Sinner, and other players in English. Produced [[60+|More than 60 social posts produced during China Open coverage.]] social posts across international and Chinese platforms; received the news center operations team’s Gold Award ([[top 5%|The award places her among the top 5% of the news-center operations team.]])."
     },
-    {
+    "awards": {
       "title": "Competition awards",
       "label": "2023",
       "bullets": [
-        [
-          "Beijing Cultural and Creative Design Competition",
-          "First Prize. Used Stable Diffusion to generate creative design assets, with ControlNet for finer control of the results."
-        ],
-        [
-          "Additional awards",
-          "National Excellence Award in the Beijing University Student Advertising Art Competition; municipal First Prize in the Challenge Cup’s social-governance research track."
-        ]
+        {
+          "label": "Beijing Cultural and Creative Design Competition",
+          "body": "First Prize. Used [[Stable Diffusion|An image-generation model used here to create design assets.]] to generate creative design assets, with [[ControlNet|A Stable Diffusion tool that guides image generation with structural inputs such as edges or pose.]] for finer control of the results."
+        },
+        {
+          "label": "Additional awards",
+          "body": "National Excellence Award in the Beijing University Student Advertising Art Competition; municipal First Prize in the Challenge Cup’s social-governance research track."
+        }
       ]
     }
-  ],
+  },
   "summary": [
-    [
-      "Personal publishing",
-      "Write about overseas study and personal choices on Xiaohongshu @QSheep: 1.5K followers, 7K+ likes and saves, and 1.4K likes on the top post."
-    ],
-    [
-      "Creator ecosystem understanding",
-      "Connect platform supply, brand collaboration, and creator needs through work at Qwen, Pugongying, and my own account."
-    ],
-    [
-      "International user perspective",
-      "Bring anthropological training, overseas living, and English-language content experience to user research and product exploration."
-    ],
-    [
-      "Directing, writing & content creation",
-      "Directed 《禁忌话题》: one of five selected films in Apple’s China creative camp, Best Original Story, and 100K+ views. Led CUC’s Baiyang Drama Club and contributed to a Prism Theatre Festival award-winning production."
-    ]
+    {
+      "title": "Personal publishing",
+      "body": "Write about overseas study and personal choices on Xiaohongshu @QSheep: [[1.5K|Approximately 1,500 followers on the personal Xiaohongshu account.]] followers, [[7K+|More than 7,000 likes and saves across posts on the personal account.]] likes and saves, and [[1.4K|Approximately 1,400 likes on the account’s most-liked post.]] likes on the top post."
+    },
+    {
+      "title": "Creator ecosystem understanding",
+      "body": "Connect platform supply, brand collaboration, and creator needs through work at Qwen, Pugongying, and my own account."
+    },
+    {
+      "title": "International user perspective",
+      "body": "Bring anthropological training, overseas living, and English-language content experience to user research and product exploration."
+    },
+    {
+      "title": "Directing, writing & content creation",
+      "body": "Directed 《禁忌话题》: one of five selected films in Apple’s China creative camp, Best Original Story, and [[100K+|More than 100,000 total views across platforms.]] views. Led CUC’s Baiyang Drama Club and contributed to a Prism Theatre Festival award-winning production."
+    }
   ],
-  "cv": "assets/Qishan-Shi-CV.pdf",
-  "linkedin": "https://www.linkedin.com/in/qishan-shi-373b38298/",
   "sheepGuide": [
     {
       "id": "agent-teams",
@@ -216,24 +244,6 @@
         "This personal project grew from a creator’s own question: how do you turn a few successful posts into a repeatable approach?",
         "Account history and reader feedback inform diagnosis and topic ideas. Multiple agents simulate different audience perspectives and summarize feedback.",
         "The assistant was applied to 50+ posts, with average readership increasing by approximately 18%."
-      ]
-    },
-    {
-      "id": "china-open",
-      "title": "China Open · Content operations",
-      "notes": [
-        "A different kind of product context: creating useful content in a live international sporting event.",
-        "Qishan interviewed players in English and handled planning, interviews, editing and publishing across social platforms.",
-        "The work produced 60+ social posts, with a news-center operations team Gold Award in the top 5%."
-      ]
-    },
-    {
-      "id": "competition-awards",
-      "title": "Creative competitions",
-      "notes": [
-        "These awards add a hands-on creative side to the product work.",
-        "The cultural-design project used Stable Diffusion for visual assets, with ControlNet for finer control over the results.",
-        "It received First Prize in the Beijing Cultural and Creative Design Competition. The other awards are listed alongside it."
       ]
     }
   ]

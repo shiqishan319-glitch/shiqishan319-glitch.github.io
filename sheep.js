@@ -445,8 +445,9 @@
     try { data = JSON.parse(document.querySelector('#sheep-guide-data')?.textContent || '[]'); }
     catch { return null; }
     if (!Array.isArray(data) || !data.length) return null;
-    const entries = data.map(item => ({...item, element:document.getElementById(item.id)}))
+    const makeEntries = source => source.map(item => ({...item, element:document.getElementById(item.id)}))
       .filter(item => item.element && Array.isArray(item.notes) && item.notes.length);
+    let entries = makeEntries(data);
     const card = root.querySelector('.sheep-guide-card');
     const title = root.querySelector('#sheep-guide-title');
     const text = root.querySelector('.sheep-guide-text');
@@ -526,6 +527,12 @@
     function requestUpdate() {
       if (!updateFrame) updateFrame = requestAnimationFrame(update);
     }
+    document.addEventListener('sitecontent:update', event => {
+      const next = event.detail?.sheepGuide;
+      if (!Array.isArray(next)) return;
+      data = next; entries = makeEntries(data); current = null; index = 0;
+      hide(); requestUpdate();
+    });
     function manualExplain() { show(true); }
     shortcut.addEventListener('click', manualExplain);
     more.addEventListener('click', () => {
