@@ -34,7 +34,33 @@ LOGOS = {'LSE':'lse.svg', 'CUC':'cuc.jpg', 'Alibaba · Qwen':'qwen.png', 'Xiaoho
 
 # Short, self-contained explanations for terms and metrics that can be opaque to visitors.
 TOOLTIPS = {
+    'periodic and time-sensitive creator labels': 'Tags that surface creators for seasonal topics, scheduled events, or interests that change over time.',
+    'North American demand validation': 'Research into whether North American users have relevant needs and whether the product can meet them.',
+    'post-search order conversion': 'The share of users who place an order after using creator search.',
+    'willingness and ability to pay': 'Whether potential customers both want the product enough to pay and have the capacity to do so.',
+    'willingness to pay': 'Whether potential customers are prepared to pay for a product or feature.',
+    'controlled comparisons': 'Comparisons that hold model and tool conditions steady to isolate the effect of Skill use or version.',
+    'model and tool conditions': 'The model and tools are kept constant within a comparison so their effects do not confound the result.',
+    'end-to-end outcomes': 'The quality of the complete task result, beyond the output of any single step.',
+    'multimodal understanding': 'Interpreting more than one type of input, such as video imagery and text.',
+    'multi-agent system': 'A system where multiple specialized AI agents coordinate to complete a larger task.',
     'Multi-Agent System': 'A system where multiple specialized AI agents coordinate to complete a larger task.',
+    'Agent Teams': 'A group of coordinated Agents that work together across steps in a video-creation task.',
+    'Agent': 'An AI system that can work toward a goal and use tools to complete task steps.',
+    'Skill-specific instructions': 'Test instructions tailored to each Skill’s capabilities and use cases.',
+    'canvas workflow': 'A visual sequence of connected steps used to build a creative task.',
+    'model routing': 'Directing a generation request to the selected model through the right interface.',
+    'Wan 3.0': 'A newly connected generation model; existing Skills were adapted to use it.',
+    'Qwen Image 3.0': 'A newly connected image generation model; existing Skills were adapted to use it.',
+    'node quality': 'The quality of an individual step in a multi-step creative workflow.',
+    'organic traffic': 'Visits that come from unpaid search results rather than advertisements.',
+    'ability to pay': 'Whether a target market has the financial capacity to pay for a product.',
+    'acquisition costs': 'The cost of attracting a new user or customer.',
+    'search intent': 'What someone is trying to find or accomplish with a search query.',
+    'semantic matching': 'Matching creators and opportunities by meaning and relevance, beyond exact keyword overlap.',
+    'order value': 'The monetary value of orders attributed to the recommended creators.',
+    'Stable Diffusion': 'An image-generation model used here to create design assets.',
+    'MVP': 'Minimum viable product: an early version focused on validating core product value.',
     'Skill': 'A reusable instruction set that helps an Agent perform a task consistently.',
     'Runtime': 'The execution layer that manages an Agent’s context, tools, and task flow.',
     'Subagent': 'A helper agent assigned a focused task, such as extracting useful context from conversation history.',
@@ -89,7 +115,7 @@ format_body.tip_id=0
 def details(item):
     d=item.get('details')
     if not d:return ''
-    return f'<details class="project-details"><summary>{e(d["label"])}<span class="expand-icon" aria-hidden="true">+</span></summary><p>{e(d["text"])}</p></details>'
+    return f'<details class="project-details"><summary>{e(d["label"])}<span class="expand-icon" aria-hidden="true">+</span></summary><p>{format_body(d["text"])}</p></details>'
 
 linkedin=''
 if c.get('linkedin'):
@@ -97,7 +123,7 @@ if c.get('linkedin'):
     linkedin=f'<a class="action-link" href="{e(c["linkedin"])}" target="_blank" rel="noopener noreferrer">{icon("linkedin")}LinkedIn{icon("external")}<span class="sr-only"> (opens in a new tab)</span></a>'
 
 def bullets(items):
-    return '<ul class="bullet-list">'+''.join('<li'+(' class="has-label"' if title else '')+'>'+(f'<strong class="bullet-label">{e(title)}</strong>' if title else '')+'<p>'+format_body(body)+'</p></li>' for title,body in items)+'</ul>' 
+    return '<ul class="bullet-list">'+''.join('<li'+(' class="has-label"' if title else '')+'>'+(f'<strong class="bullet-label">{format_body(title)}</strong>' if title else '')+'<p>'+format_body(body)+'</p></li>' for title,body in items)+'</ul>'
 def permalink(anchor,title):
     return f'<a class="permalink" href="#{anchor}" aria-label="Link to {e(title)}" title="Link to this project">{icon("link")}</a>'
 
@@ -112,14 +138,14 @@ for x in c['experience']:
     parts=''
     for i,p in enumerate(x.get('projects',[]),1):
         anchor=['agent-teams','overseas-product'][i-1]
-        parts+=f'''<section class="work-project" id="{anchor}" tabindex="-1"><div class="project-heading"><span class="project-number">PROJECT {i:02}</span><div class="project-title-row"><h4>{e(p['title'])}</h4>{permalink(anchor,p['title'])}</div><p>{format_body(p['subtitle'])}</p></div><p class="intro">{e(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
+        parts+=f'''<section class="work-project" id="{anchor}" tabindex="-1"><div class="project-heading"><span class="project-number">PROJECT {i:02}</span><div class="project-title-row"><h4>{format_body(p['title'])}</h4>{permalink(anchor,p['title'])}</div><p>{format_body(p['subtitle'])}</p></div><p class="intro">{e(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
     if 'intro' in x:parts+=f'<p class="intro">{e(x["intro"])}</p>'
     if 'bullets' in x:parts+=bullets(x['bullets'])
     experience+=f'''<article class="experience-entry" id="{ {"Alibaba · Qwen":"qwen-experience", "Xiaohongshu · Pugongying":"creator-platform", "Publicis Groupe":"publicis"}[x["company"]] }"><header class="entry-header"><div class="organization">{logo(LOGOS[x['company']])}<div class="organization-copy"><h3>{e(x['company'])}</h3><p class="entry-role">{e(x['role'])}</p></div></div><span class="date">{e(x['date'])}</span></header>{parts}</article>'''
 projects=''
 for anchor,p in zip(['creator-assistant','china-open','competition-awards'],c['projects']):
     workflow='<div class="project-workflow" aria-label="Assistant workflow"><span>Account history</span><span aria-hidden="true">→</span><span>Audience perspectives</span><span aria-hidden="true">→</span><span>Content feedback</span></div>' if anchor=='creator-assistant' else ''
-    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{e(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(p['bullets'])}{details(p)}</article>'''
+    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{format_body(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(p['bullets'])}{details(p)}</article>'''
 
 sheep_svg=(root/'assets/sheep.svg').read_text().replace('<svg ', '<svg aria-hidden="true" focusable="false" ', 1)
 sheep=f'''<div class="sheep-home"><div class="sheep-companion" hidden><button type="button" class="sheep-project-prompt" hidden>About this project</button><button class="sheep-button" type="button" aria-label="Say hello to the little sheep" aria-describedby="sheep-help"><span class="sheep-bubble" aria-hidden="true"></span>{sheep_svg}<span class="sheep-caption" aria-hidden="true">Say hello</span></button><span id="sheep-help" class="sr-only">Tap to say hello. Double-click me to alternate between a snack and a head pat, stroke my head for a pat, or hold and release for a little hop. Drag me to a new spot, or double-click empty space to grow a tuft of grass for me. I snack and nap while you read.</span><section class="sheep-guide-card" aria-labelledby="sheep-guide-title" hidden><div class="sheep-guide-heading"><span>READ ALONG</span><button type="button" class="sheep-guide-close" aria-label="Close project note">×</button></div><h2 id="sheep-guide-title"></h2><p class="sheep-guide-text"></p><div class="sheep-guide-footer"><span class="sheep-guide-count"></span><button type="button" class="sheep-guide-more">Tell me more</button></div><button type="button" class="sheep-auto" aria-pressed="true">Automatic notes: on</button></section><span class="sr-only sheep-status" role="status" aria-live="polite" aria-atomic="true"></span></div></div>'''
