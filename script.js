@@ -110,3 +110,68 @@ for (const term of document.querySelectorAll('.term-tip')) {
     positionTooltip(term, rect.right + 4, rect.top + rect.height / 2);
   });
 }
+
+// Project notebooks keep the CV readable at a glance, then reveal the reasoning
+// behind a few representative projects for visitors who want to go deeper.
+const projectNotebooks = {
+  'agent-teams': {
+    trail: ['Skill capability', 'Test instruction', 'Controlled comparison'],
+    stages: [
+      ['01', 'The problem', 'A generic prompt cannot tell whether a Skill works in the situations it was designed for.'],
+      ['02', 'The judgment', 'Write instructions around each Skill’s capability and use case, then hold model and tool conditions constant.'],
+      ['03', 'The result', 'An internal evaluation system now covers 100+ Skills and their versions, making iteration traceable.']
+    ]
+  },
+  'overseas-product': {
+    trail: ['Agent performance', 'User demand', 'Acquisition feature'],
+    stages: [
+      ['01', 'The problem', 'Overseas growth cannot begin with available features alone: the product needs both a credible use case and demand.'],
+      ['02', 'The judgment', 'Evaluate North American and Latin American marketing scenarios, then pair product feasibility with search and conversion signals.'],
+      ['03', 'The result', 'The work prioritized background removal and AI face swap, while separating search-led opportunities from display-ad creative.']
+    ]
+  },
+  'creator-assistant': {
+    trail: ['Account history', 'Audience signals', 'Topic & structure'],
+    stages: [
+      ['01', 'The problem', 'Some creators have successful posts but no reliable way to turn those signals into the next strong idea.'],
+      ['02', 'The judgment', 'Use account history and reader feedback, then let multiple Agents simulate audience reactions and discuss candidate content.'],
+      ['03', 'The result', 'Applied across 50+ posts, the assistant helped raise average readership by approximately 18%.']
+    ]
+  }
+};
+
+function buildNotebook({ trail, stages }) {
+  const trailMarkup = trail.map((item, index) => `
+    <span class="notebook-trail-item"><b>${String(index + 1).padStart(2, '0')}</b>${item}</span>
+  `).join('');
+  const stageMarkup = stages.map(([number, label, copy]) => `
+    <article class="notebook-stage">
+      <span class="notebook-stage-number">${number}</span>
+      <h5>${label}</h5>
+      <p>${copy}</p>
+    </article>
+  `).join('');
+  return `
+    <summary>
+      <span class="notebook-summary-mark" aria-hidden="true">✦</span>
+      <span class="notebook-summary-copy"><b>Behind the work</b><small>Problem · judgment · result</small></span>
+      <span class="expand-icon" aria-hidden="true">+</span>
+    </summary>
+    <div class="notebook-fold">
+      <div class="notebook-trail" aria-label="Project reasoning flow">${trailMarkup}</div>
+      <div class="notebook-stages">${stageMarkup}</div>
+    </div>
+  `;
+}
+
+for (const [projectId, notebook] of Object.entries(projectNotebooks)) {
+  const project = document.getElementById(projectId);
+  if (!project) continue;
+  let details = project.querySelector(':scope > .project-details');
+  if (!details) {
+    details = document.createElement('details');
+    project.append(details);
+  }
+  details.classList.add('behind-work');
+  details.innerHTML = buildNotebook(notebook);
+}

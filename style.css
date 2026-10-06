@@ -178,3 +178,23 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 @media(max-width:760px){.tooltip-pop{max-width:min(270px,calc(100vw - 24px));padding:10px 12px;border-radius:11px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.tooltip-pop{transition:none}}
 @media print{.term-tip{text-decoration:none}.tooltip-pop{display:none}}
+
+/* A small field notebook gives key projects room for the reasoning behind the CV line. */
+.project-details.behind-work{max-width:none;margin-top:27px;padding-top:0;border-top:0}
+.behind-work summary{width:fit-content;max-width:100%;min-height:0;padding:0;border:0;display:flex;align-items:center;gap:10px;color:#4d6355;cursor:pointer;list-style:none}
+.behind-work summary::-webkit-details-marker{display:none}
+.notebook-summary-mark{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#e9efe1;color:#607a59;font-size:13px;transition:transform .25s ease,background .25s ease}
+.notebook-summary-copy{display:grid;gap:0;text-align:left}.notebook-summary-copy b{font:600 12px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase}.notebook-summary-copy small{font-size:10px;line-height:1.45;color:#83917e;letter-spacing:.02em}
+.behind-work .expand-icon{margin-left:2px;background:#e7eee1;color:#55704d}
+.behind-work summary:hover .notebook-summary-mark{background:#dce9d5;transform:rotate(18deg) scale(1.06)}
+.behind-work[open] .notebook-summary-mark{transform:rotate(45deg);background:#e6e0f0;color:#75658c}
+.behind-work[open] .expand-icon{background:#e5def0;color:#75658c}
+.notebook-fold{position:relative;margin-top:16px;padding:17px 18px 18px;border-top:1px solid #d7dfd1;background:linear-gradient(107deg,#f6f8f2 0%,#fbfaf8 54%,#f5f1f8 100%);overflow:hidden}
+.notebook-fold::after{content:"";position:absolute;right:-52px;bottom:-66px;width:190px;height:190px;border:1px solid #e2d9e9;border-radius:50%;opacity:.75;pointer-events:none}
+.notebook-trail{display:flex;align-items:center;gap:0;margin:0 0 16px;color:#6e806b;position:relative;z-index:1;overflow-x:auto;scrollbar-width:none}.notebook-trail::-webkit-scrollbar{display:none}
+.notebook-trail-item{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:10px;line-height:1.2;letter-spacing:.02em}.notebook-trail-item b{font-size:8px;letter-spacing:.12em;color:#9b8bad}.notebook-trail-item:not(:last-child)::after{content:"";display:inline-block;width:30px;height:1px;margin:0 10px;background:linear-gradient(90deg,#adc0a6,#cfbfdc)}
+.notebook-stages{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#dce3d8}
+.notebook-stage{min-width:0;padding:16px 15px 17px;background:#fbfaf7}.notebook-stage:nth-child(2){background:#f3f6ee}.notebook-stage:nth-child(3){background:#f5f1f8}.notebook-stage-number{display:block;margin-bottom:14px;color:#869883;font-size:9px;letter-spacing:.12em}.notebook-stage h5{margin:0 0 6px;font:400 19px/1.15 Georgia,"Times New Roman",serif;letter-spacing:-.3px;color:#405448}.notebook-stage p{margin:0;max-width:none;color:#66736a;font-size:12px;line-height:1.75}
+@media (prefers-reduced-motion:no-preference){.notebook-fold{animation:notebook-unfold .28s ease-out both}.behind-work[open] .notebook-stage{animation:notebook-stage-in .34s both}.behind-work[open] .notebook-stage:nth-child(2){animation-delay:.055s}.behind-work[open] .notebook-stage:nth-child(3){animation-delay:.11s}@keyframes notebook-unfold{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}@keyframes notebook-stage-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+@media(max-width:640px){.project-details.behind-work{margin-top:24px}.notebook-summary-copy b{font-size:11px}.notebook-fold{margin-left:-2px;margin-right:-2px;padding:15px 0 0;background:transparent;border-top-color:#d6dfd1}.notebook-fold::after{display:none}.notebook-trail{padding:0 2px;margin-bottom:12px}.notebook-trail-item{font-size:9px}.notebook-trail-item:not(:last-child)::after{width:16px;margin:0 7px}.notebook-stages{display:block;background:transparent}.notebook-stage{padding:15px 14px;border-top:1px solid #dce3d8}.notebook-stage:first-child{border-top:0}.notebook-stage-number{margin-bottom:8px}.notebook-stage h5{font-size:17px}.notebook-stage p{font-size:12px;line-height:1.7}}
+@media print{.behind-work{display:none}}
