@@ -47,7 +47,19 @@
   function renderDemo(root, demo) {
     let figure = direct(root, ':scope > .project-demo');
     if (!demo) { figure?.remove(); return; }
-    if (!figure) { figure = document.createElement('figure'); figure.className = 'project-demo'; }
+    if (figure) {
+      setText(figure.querySelector('h4'), demo.title);
+      setText(figure.querySelector('.demo-meta'), demo.caption);
+      setText(figure.querySelector('.demo-description'), demo.description);
+      const video = figure.querySelector('video');
+      for (const [attribute, value] of Object.entries({ src: demo.src, poster: demo.poster, 'aria-label': demo.title })) {
+        if (video.getAttribute(attribute) !== value) video.setAttribute(attribute, value);
+      }
+      const links = figure.querySelectorAll('.demo-links a');
+      links[0].href = demo.repositoryUrl; links[1].href = demo.src;
+      return;
+    }
+    figure = document.createElement('figure'); figure.className = 'project-demo';
     figure.innerHTML = `<figcaption><h4>${escapeHTML(demo.title)}</h4><p class="demo-meta">${escapeHTML(demo.caption)}</p></figcaption>
       <video controls playsinline preload="none" width="1920" height="1080" poster="${escapeHTML(demo.poster)}" src="${escapeHTML(demo.src)}" aria-label="${escapeHTML(demo.title)}"></video>
       <p class="demo-description">${escapeHTML(demo.description)}</p>
