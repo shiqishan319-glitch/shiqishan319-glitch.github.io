@@ -116,3 +116,6 @@
 编辑 `projects.creatorAssistant.demo`：`title` 是标题，`caption` 是时长与语言说明，`description` 是内容简介，`src` 是视频地址，`poster` 是封面地址，`repositoryUrl` 是项目 GitHub 链接。替换视频时将文件放入 `assets/`，再修改对应地址；删除整个 `demo` 字段可隐藏展示区。视频由访客手动播放，不自动下载整段视频。
 
 当前使用项目仓库 README 中公开的 `sqsagent-promo.mp4`（约 42 秒，1080p，无音轨）。网页副本为 `assets/creator-assistant-demo.mp4`，封面取自该视频；画面保留虚构演示内容的说明。原项目仓库不作修改。
+
+
+小羊当前采用较安静的节奏：首次散步等待 18 秒，后续每 28 秒尝试一次；保持清醒约 90 秒后才打瞌睡。首次自动长草在 45–65 秒后，后续间隔 75–120 秒。项目自动解说等待 3 秒，间隔至少 35 秒。上述等待受阅读、拖动和进食状态影响；主动点击、拖动、喂草不受这些被动等待限制。日常台词在 `Qsheep.messages`，项目解说在 `sheepGuide`。

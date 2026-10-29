@@ -22,31 +22,85 @@
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
   const timers = new Map();
   const defaultConfig = {
-    name: 'Qsheep', enabled: true,
-    interactions: { followPointer: true, wandering: true, autoGrass: true, autoSleep: true,
-      stroking: true, dragging: true, hoverGreeting: true, readingCelebration: true },
-    actions: { click: 'greet', doubleClick: ['feed', 'pat'], longPress: 'hop', blankDoubleClick: 'feed' },
-    timing: { wanderStartSeconds: 4, wanderIntervalSeconds: 6.5, blinkSeconds: 5.5,
-      idleBeforeSleepSeconds: 20, sleepSeconds: 16, speechSeconds: 4.4,
-      firstGrassMinSeconds: 9, firstGrassMaxSeconds: 12,
-      grassMinSeconds: 22, grassMaxSeconds: 38, grassAfterScrollSeconds: 8 },
-    easterEgg: { enabled: true, probability: 0.01 },
-    projectGuide: { enabled: true, automatic: true, delaySeconds: 1, durationSeconds: 8.5, gapSeconds: 10 },
-    messages: { greetings: [
-    'Oh, hello. Nice to meet ewe.', 'Small sheep. Big thoughts.',
-    'Just here to keep ewe company.', 'Still no pockets.',
-    'Soft wool. Strong opinions on grass.', 'I supervise the daydreaming.'
-    ], wake: 'I was thinking. Probably.', pat: 'That’s the spot. Thank ewe.',
-      thirdHello: 'You’ve counted me three times.', tenthHello: 'Ten hellos. Still just one sheep.',
-      hop: 'Soft wool. Springy little hooves.', dropped: 'A new little spot. Thank ewe.',
-      feed: 'A little snack? Thank ewe!', hover: 'Oh! A visitor. Hello, ewe.',
-      grass: 'Fresh grass! Coming for a nibble.', cozy: 'Thank ewe. I’m staying cozy here.',
-      noSpace: 'A little open space for my snack, please?',
-      readingEnd: 'You made it to the end. A tiny standing ovation.' },
-    captions: { awake: 'Say hello', sleeping: 'Daydreaming…', drowsy: 'Getting sleepy',
-      yawning: 'A tiny yawn', landing: 'Back on my hooves', petting: 'More head pats?',
-      feeding: 'Nom, nom', pressed: 'Soft little sheep', waking: 'Oh, hello again' }
-  };
+  "name": "Qsheep",
+  "enabled": true,
+  "interactions": {
+    "followPointer": true,
+    "wandering": true,
+    "autoGrass": true,
+    "autoSleep": true,
+    "stroking": true,
+    "dragging": true,
+    "hoverGreeting": true,
+    "readingCelebration": true
+  },
+  "actions": {
+    "click": "greet",
+    "doubleClick": [
+      "feed",
+      "pat"
+    ],
+    "longPress": "hop",
+    "blankDoubleClick": "feed"
+  },
+  "timing": {
+    "wanderStartSeconds": 18,
+    "wanderIntervalSeconds": 28,
+    "blinkSeconds": 5.5,
+    "idleBeforeSleepSeconds": 90,
+    "sleepSeconds": 30,
+    "speechSeconds": 4.4,
+    "firstGrassMinSeconds": 45,
+    "firstGrassMaxSeconds": 65,
+    "grassMinSeconds": 75,
+    "grassMaxSeconds": 120,
+    "grassAfterScrollSeconds": 35
+  },
+  "easterEgg": {
+    "enabled": true,
+    "probability": 0.01
+  },
+  "projectGuide": {
+    "enabled": true,
+    "automatic": true,
+    "delaySeconds": 3,
+    "durationSeconds": 8.5,
+    "gapSeconds": 35
+  },
+  "messages": {
+    "greetings": [
+      "Oh, hello. Nice to meet ewe.",
+      "Take your time. I’ll keep ewe company.",
+      "A quiet corner. A very content sheep.",
+      "Just wool-gathering over here.",
+      "No rush. The grass can wait.",
+      "Small sheep. Plenty to ponder."
+    ],
+    "wake": "A little rest. A fresh thought.",
+    "pat": "That’s the spot. Thank ewe.",
+    "thirdHello": "You’ve counted me three times.",
+    "tenthHello": "Ten hellos. Still just one sheep.",
+    "hop": "Soft wool. Springy little hooves.",
+    "dropped": "This looks like a lovely spot to stay.",
+    "feed": "A little snack? Thank ewe!",
+    "hover": "Hello, ewe. Take your time.",
+    "grass": "A little grass break.",
+    "cozy": "Happy to stay right here.",
+    "noSpace": "A little open space for my snack, please?",
+    "readingEnd": "Thanks for spending a little time with us."
+  },
+  "captions": {
+    "awake": "Keeping you company",
+    "sleeping": "Daydreaming…",
+    "drowsy": "Getting sleepy",
+    "yawning": "A tiny yawn",
+    "landing": "Back on my hooves",
+    "petting": "A lovely head pat",
+    "feeding": "Nom, nom",
+    "pressed": "Soft little sheep",
+    "waking": "Oh, hello again"
+  }
+};
   // Only known fields are accepted. Missing or mistyped settings retain defaults.
   const allowedActions = ['greet', 'feed', 'pat', 'hop', 'none'];
   function normalizeConfig(input) {

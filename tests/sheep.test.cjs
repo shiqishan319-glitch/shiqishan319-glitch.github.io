@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
-function setup(reduced = false, withGuide = false, withGrass = false) {
+function setup(reduced = false, withGuide = false, withGrass = false, useLiveTiming = false) {
   let randomValue=0;
   let time = 100000, sequence = 0, animationCount = 0, observer;
   const jobs = new Map(), elements = new Map();
@@ -67,6 +67,12 @@ function setup(reduced = false, withGuide = false, withGrass = false) {
   ctx.window=window; window.IntersectionObserver=ctx.IntersectionObserver;
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../sheep.js'),'utf8'),ctx);
   function tick(ms) {const end=time+ms; let safety=0; while(true){const due=[...jobs].filter(([,j])=>j.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;if(++safety>1000)throw Error('Runaway timer');time=due[1].at;jobs.delete(due[0]);due[1].fn();}time=end;}
+  if (!useLiveTiming) doc.emit('sitecontent:update', {detail:{Qsheep:{
+    timing:{wanderStartSeconds:4,wanderIntervalSeconds:6.5,idleBeforeSleepSeconds:20,sleepSeconds:16,
+      firstGrassMinSeconds:9,firstGrassMaxSeconds:12,grassMinSeconds:22,grassMaxSeconds:38,grassAfterScrollSeconds:8},
+    projectGuide:{delaySeconds:1,gapSeconds:10}
+  }}});
+  calls.length=0; // Start observations after fixture configuration.
   const b=get('.sheep-button');
   function project(id) {
     get('.hero').rect={bottom:-100};
@@ -204,7 +210,7 @@ test('explicit feeding wakes a sleeping sheep and respects reduced motion',()=>{
  const r=setup(true,false,true);r.doc.emit('dblclick',{target,button:0,clientX:200,clientY:300});r.tick(5000);assert.ok(!r.calls.some(c=>c[0]==='grass-trip'));
 });
 test('page-end celebration happens once and stays quiet for screen readers',()=>{
- const s=setup();s.get('footer').rect={bottom:780};s.window.emit('scroll');s.tick(1800);assert.match(s.get('.sheep-bubble').textContent,/standing ovation/);assert.equal(s.say(),'');const n=s.calls.filter(c=>c[1]==='hop').length;s.window.emit('scroll');s.tick(2000);assert.equal(s.calls.filter(c=>c[1]==='hop').length,n);
+ const s=setup();s.get('footer').rect={bottom:780};s.window.emit('scroll');s.tick(1800);assert.match(s.get('.sheep-bubble').textContent,/Thanks for spending a little time/);assert.equal(s.say(),'');const n=s.calls.filter(c=>c[1]==='hop').length;s.window.emit('scroll');s.tick(2000);assert.equal(s.calls.filter(c=>c[1]==='hop').length,n);
 });
 
 test('grass sprouts, is approached, then disappears only while eating',()=>{
@@ -354,4 +360,17 @@ test('published JSON configuration loads in the controller and renderer forwards
  const content=JSON.parse(fs.readFileSync(path.join(__dirname,'../content.json'),'utf8'));
  assert.ok(content.Qsheep);const s=setup(false,true,true);s.configure(content.Qsheep);s.click();assert.equal(s.say(),content.Qsheep.messages.greetings[0]);
  assert.match(fs.readFileSync(path.join(__dirname,'../content-editor.js'),'utf8'),/Qsheep: data.Qsheep/);
+});
+
+
+test('live pacing leaves an awake standing pause before and between strolls',()=>{
+ const s=setup(false,false,false,true);
+ s.tick(17999);assert.equal(s.state(),'awake');assert.equal(s.calls.filter(c=>c[0]==='roam').length,0);
+ s.tick(1);assert.equal(s.calls.filter(c=>c[0]==='roam').length,1);
+ s.tick(27999);assert.equal(s.calls.filter(c=>c[0]==='roam').length,1);assert.equal(s.state(),'awake');
+ s.tick(1);assert.equal(s.calls.filter(c=>c[0]==='roam').length,2);
+});
+test('live pacing delays automatic grass but manual snacks still respond immediately',()=>{
+ const s=setup(false,false,true,true);s.tick(44000);assert.ok(!s.calls.some(c=>c[0]==='grass-trip'));
+ doubleClickSheep(s);assert.equal(s.state(),'feeding');
 });
