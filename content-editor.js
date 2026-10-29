@@ -105,6 +105,7 @@
     for (const link of document.querySelectorAll('[href^="mailto:"]')) { link.href = `mailto:${data.site.email}`; if (link.classList.contains('footer-email') || link.closest('.hero-contact')) link.lastChild.textContent = data.site.email; }
     const copy = document.querySelector('.copy-email'); if (copy) copy.dataset.email = data.site.email;
     for (const link of document.querySelectorAll('.cv-button,.cv-preview,.header-cv')) link.href = data.site.cv;
+    setText(document.querySelector('.file-language'), data.site.cvLabel || '中文 PDF');
     const linkedin = document.querySelector('.hero-actions a[href*="linkedin"]'); if (linkedin) linkedin.href = data.site.linkedin;
     const github = document.querySelector('.hero-actions a[href*="github"]'); if (github) github.href = data.site.github;
 

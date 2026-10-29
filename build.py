@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 root=Path(__file__).parent
 c=json.loads((root/'content.json').read_text())
+# Layout aliases only; all copy, tooltips and notes come from content.json.
+c = {**c, **c['site'], 'role': c['hero']['eyebrow'], 'intro': c['hero']['intro']}
 name_parts=c['name'].rsplit(' ',1)
 name_heading=e(name_parts[0])+(f' <em>{e(name_parts[1])}</em>' if len(name_parts)>1 else '')
 # Decorative icons are hidden from assistive technology; visible text labels remain.
@@ -32,90 +34,31 @@ def logo(filename):
 
 LOGOS = {'LSE':'lse.svg', 'CUC':'cuc.jpg', 'Alibaba · Qwen':'qwen.png', 'Xiaohongshu · Pugongying':'xiaohongshu.png', 'Publicis Groupe':'publicis.png'}
 
-# Short, self-contained explanations for terms and metrics that can be opaque to visitors.
-TOOLTIPS = {
-    'periodic and time-sensitive creator labels': 'Tags that surface creators for seasonal topics, scheduled events, or interests that change over time.',
-    'North American demand validation': 'Research into whether North American users have relevant needs and whether the product can meet them.',
-    'post-search order conversion': 'The share of users who place an order after using creator search.',
-    'willingness and ability to pay': 'Whether potential customers both want the product enough to pay and have the capacity to do so.',
-    'willingness to pay': 'Whether potential customers are prepared to pay for a product or feature.',
-    'controlled comparisons': 'Comparisons that hold model and tool conditions steady to isolate the effect of Skill use or version.',
-    'model and tool conditions': 'The model and tools are kept constant within a comparison so their effects do not confound the result.',
-    'end-to-end outcomes': 'The quality of the complete task result, beyond the output of any single step.',
-    'multimodal understanding': 'Interpreting more than one type of input, such as video imagery and text.',
-    'multi-agent system': 'A system where multiple specialized AI agents coordinate to complete a larger task.',
-    'Multi-Agent System': 'A system where multiple specialized AI agents coordinate to complete a larger task.',
-    'Agent Teams': 'A group of coordinated Agents that work together across steps in a video-creation task.',
-    'Agent': 'An AI system that can work toward a goal and use tools to complete task steps.',
-    'Skill-specific instructions': 'Test instructions tailored to each Skill’s capabilities and use cases.',
-    'canvas workflow': 'A visual sequence of connected steps used to build a creative task.',
-    'model routing': 'Directing a generation request to the selected model through the right interface.',
-    'Wan 3.0': 'A newly connected generation model; existing Skills were adapted to use it.',
-    'Qwen Image 3.0': 'A newly connected image generation model; existing Skills were adapted to use it.',
-    'node quality': 'The quality of an individual step in a multi-step creative workflow.',
-    'organic traffic': 'Visits that come from unpaid search results rather than advertisements.',
-    'ability to pay': 'Whether a target market has the financial capacity to pay for a product.',
-    'acquisition costs': 'The cost of attracting a new user or customer.',
-    'search intent': 'What someone is trying to find or accomplish with a search query.',
-    'semantic matching': 'Matching creators and opportunities by meaning and relevance, beyond exact keyword overlap.',
-    'order value': 'The monetary value of orders attributed to the recommended creators.',
-    'Stable Diffusion': 'An image-generation model used here to create design assets.',
-    'MVP': 'Minimum viable product: an early version focused on validating core product value.',
-    'Skill': 'A reusable instruction set that helps an Agent perform a task consistently.',
-    'Runtime': 'The execution layer that manages an Agent’s context, tools, and task flow.',
-    'Subagent': 'A helper agent assigned a focused task, such as extracting useful context from conversation history.',
-    'Vibe Coding': 'Rapid prototyping by describing changes in natural language and refining the code with AI assistance.',
-    'SEO': 'Search engine optimization: shaping pages and content so people can find them through relevant searches.',
-    'CTR': 'Click-through rate: the share of people who see a result and click it.',
-    'A/B tests': 'A controlled comparison between a version shown to one group and an alternative shown to another.',
-    'ControlNet': 'A Stable Diffusion tool that guides image generation with structural inputs such as edges or pose.',
-    'top 5%': 'The award places her among the top 5% of the news-center operations team.',
-    '5%': 'Reduction in total token usage on long tasks after the context optimization.',
-    '100+ quality Skills': 'The creation Agent helped build a supply of more than 100 reusable Skills.',
-    '100+ Skills': 'The internal evaluation platform covers more than 100 Skills and their different versions.',
-    '50+ posts': 'More than 50 posts were used to apply the content assistant.',
-    '50+': 'More than 50 creators collaborated on this campaign.',
-    '130+': 'More than 130 creators were assessed for the campaign.',
-    '65+': 'More than 65 campaign scripts were reviewed.',
-    '100K+': 'More than 100,000 total views across platforms.',
-    '30%': 'Increase in the script approval rate after refining the creator screening and collaboration process.',
-    '50%': 'Reported growth in overseas users during this period.',
-    '21%': 'Search-result click-through rate in the experiment group; the control group was 18%.',
-    '18%': 'The control group’s search-result click-through rate in the A/B test.',
-    'average readership increasing by approximately 18%': 'Approximate increase in average readership across posts using the assistant.',
-    '4.0%': 'Search-to-order conversion rate before the change.',
-    '4.4%': 'Search-to-order conversion rate after the change.',
-    '135%': 'Growth in the number of creators collaborating with brands after the feature changes.',
-    '25%': 'Month-over-month increase in brand collaboration orders during the campaign period.',
-    '2%': 'Share of the overall creator pool represented by the event’s recommended creators.',
-    '11%': 'Share of order value contributed by the event’s recommended creators.',
-    '400+': 'More than 400 creators received their first brand deal through these activities.',
-    'approximately 18%': 'Approximate increase in average readership across posts using the assistant.',
-    '1.5K': 'Approximately 1,500 followers on the personal Xiaohongshu account.',
-    '7K+': 'More than 7,000 likes and saves across posts on the personal account.',
-    '1.4K': 'Approximately 1,400 likes on the account’s most-liked post.',
-    '60+': 'More than 60 social posts produced during China Open coverage.',
-    'RMB 3 million': 'The total value of client requests supported by the product changes.',
-}
-
 def format_body(body):
-    # Keep source wording intact; add unobtrusive, keyboard- and touch-accessible explanations.
-    escaped=e(body)
-    pattern=r"(?<![\w.])(?:"+'|'.join(re.escape(term) for term in sorted(TOOLTIPS,key=len,reverse=True))+r")(?![\w])"
+    escaped = e(str(body))
     def replace(match):
-        term=match.group()
-        explanation=TOOLTIPS[term]
-        format_body.tip_id+=1
-        return (f'<span class="term-tip" tabindex="0" aria-describedby="tip-{format_body.tip_id}">'
-                f'<span class="evidence">{term}</span>'
-                f'<span class="tooltip-pop" id="tip-{format_body.tip_id}" role="tooltip">{e(explanation)}</span></span>')
-    return re.sub(pattern,replace,escaped)
-format_body.tip_id=0
+        format_body.tip_id += 1
+        label, explanation = match.groups()
+        ident = f"tip-{format_body.tip_id}"
+        return (f'<span class="term-tip" tabindex="0" aria-describedby="{ident}">'
+                f'<span class="evidence">{label}</span>'
+                f'<span class="tooltip-pop" id="{ident}" role="tooltip">{explanation}</span></span>')
+    escaped = re.sub(r"\[\[([^|\]]+)\|([^\]]+)\]\]", replace, escaped)
+    return re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", escaped)
+format_body.tip_id = 0
+
+def plain(body):
+    return re.sub(r"\*\*([^*]+)\*\*", r"\1", re.sub(r"\[\[([^|\]]+)\|([^\]]+)\]\]", r"\1", body))
 
 def details(item):
-    d=item.get('details')
-    if not d:return ''
-    return f'<details class="project-details"><summary>{e(d["label"])}<span class="expand-icon" aria-hidden="true">+</span></summary><p>{format_body(d["text"])}</p></details>'
+    n = item.get('notebook')
+    if not n: return ''
+    trail = ''.join(f'<span class="notebook-trail-item"><b>{i:02}</b>{e(step)}</span>' for i, step in enumerate(n['trail'],1))
+    stages = ''.join(f'<article class="notebook-stage"><span class="notebook-stage-number">{e(num)}</span><h5>{e(label)}</h5><p>{e(copy)}</p></article>' for num,label,copy in n['stages'])
+    return ('<details class="project-details behind-work"><summary><span class="notebook-summary-mark" aria-hidden="true">✦</span>'
+            '<span class="notebook-summary-copy"><b>Behind the work</b><small>Problem · judgment · result</small></span>'
+            '<span class="expand-icon" aria-hidden="true">+</span></summary>'
+            f'<div class="notebook-fold"><div class="notebook-trail" aria-label="Project reasoning flow">{trail}</div><div class="notebook-stages">{stages}</div></div></details>')
 
 linkedin=''
 if c.get('linkedin'):
@@ -123,33 +66,36 @@ if c.get('linkedin'):
     linkedin=f'<a class="action-link" href="{e(c["linkedin"])}" target="_blank" rel="noopener noreferrer">{icon("linkedin")}LinkedIn{icon("external")}<span class="sr-only"> (opens in a new tab)</span></a>'
 
 def bullets(items):
-    return '<ul class="bullet-list">'+''.join('<li'+(' class="has-label"' if title else '')+'>'+(f'<strong class="bullet-label">{format_body(title)}</strong>' if title else '')+'<p>'+format_body(body)+'</p></li>' for title,body in items)+'</ul>'
+    return '<ul class="bullet-list">'+''.join('<li'+(' class="has-label"' if title else '')+'>'+(f'<strong class="bullet-label">{format_body(title)}</strong>' if title else '')+'<p>'+format_body(body)+'</p></li>' for title,body in ((item.get('label',''),item['body']) for item in items))+'</ul>'
 def permalink(anchor,title):
-    return f'<a class="permalink" href="#{anchor}" aria-label="Link to {e(title)}" title="Link to this project">{icon("link")}</a>'
+    return f'<a class="permalink" href="#{anchor}" aria-label="Link to {e(plain(title))}" title="Link to this project">{icon("link")}</a>'
 
 def heading(name,title):
     number={'education':'01','experience':'02','projects':'03','profile':'04'}[name]
     return f'<div class="section-heading"><span class="section-number">{icon(name)}</span><h2>{title}</h2><span class="heading-line"></span><span class="section-index" aria-hidden="true">{number}</span></div>'
 education=''
 for x in c['education']:
-    education+=f'''<article class="education-card"><div class="school-top"><div class="school-identity">{logo(LOGOS[x['short']])}<span class="school-label">{e(x['short'])}</span></div><span class="date">{e(x['date'])}</span></div><h3>{e(x['school'])}</h3><p class="degree">{e(x['degree'])}</p><p class="distinction">{format_body(x['distinction'])}</p><p class="courses"><strong>Coursework:</strong> {e(x['courses'])}</p></article>'''
+    education+=f'''<article class="education-card"><div class="school-top"><div class="school-identity">{logo(LOGOS[x['schoolLabel']])}<span class="school-label">{e(x['schoolLabel'])}</span></div><span class="date">{e(x['date'])}</span></div><h3>{e(x['school'])}</h3><p class="degree">{e(x['degree'])}</p><p class="distinction">{format_body(x['distinction'])}</p><p class="courses">{format_body(x['courses'])}</p></article>'''
 experience=''
 for x in c['experience']:
-    parts=''
+    parts=f'<p class="intro">{format_body(x.get("intro",""))}</p>'
     for i,p in enumerate(x.get('projects',[]),1):
-        anchor=['agent-teams','overseas-product'][i-1]
-        parts+=f'''<section class="work-project" id="{anchor}" tabindex="-1"><div class="project-heading"><span class="project-number">PROJECT {i:02}</span><div class="project-title-row"><h4>{format_body(p['title'])}</h4>{permalink(anchor,p['title'])}</div><p>{format_body(p['subtitle'])}</p></div><p class="intro">{e(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
-    if 'intro' in x:parts+=f'<p class="intro">{e(x["intro"])}</p>'
+        anchor=p['id']
+        parts+=f'''<section class="work-project" id="{anchor}" tabindex="-1"><div class="project-heading"><span class="project-number">{e(p['number'])}</span><div class="project-title-row"><h4>{format_body(p['title'])}</h4>{permalink(anchor,p['title'])}</div><p>{format_body(p['subtitle'])}</p></div><p class="intro">{format_body(p['intro'])}</p>{bullets(p['bullets'])}{details(p)}</section>'''
     if 'bullets' in x:parts+=bullets(x['bullets'])
     experience+=f'''<article class="experience-entry" id="{ {"Alibaba · Qwen":"qwen-experience", "Xiaohongshu · Pugongying":"creator-platform", "Publicis Groupe":"publicis"}[x["company"]] }"><header class="entry-header"><div class="organization">{logo(LOGOS[x['company']])}<div class="organization-copy"><h3>{e(x['company'])}</h3><p class="entry-role">{e(x['role'])}</p></div></div><span class="date">{e(x['date'])}</span></header>{parts}</article>'''
 projects=''
-for anchor,p in zip(['creator-assistant','china-open','competition-awards'],c['projects']):
-    workflow='<div class="project-workflow" aria-label="Assistant workflow"><span>Account history</span><span aria-hidden="true">→</span><span>Audience perspectives</span><span aria-hidden="true">→</span><span>Content feedback</span></div>' if anchor=='creator-assistant' else ''
-    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{format_body(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(p['bullets'])}{details(p)}</article>'''
+for anchor,key in [('creator-assistant','creatorAssistant'),('china-open','chinaOpen'),('competition-awards','awards')]:
+    p=c['projects'][key]
+    workflow=''
+    if p.get('workflow'):
+        workflow='<div class="project-workflow" aria-label="Assistant workflow">'+'<i aria-hidden="true"></i>'.join(f'<span>{e(step)}</span>' for step in p['workflow'])+'</div>'
+    items=p.get('bullets',[{'label':p.get('bulletLabel',''),'body':p.get('body','')}])
+    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{format_body(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(items)}{details(p)}</article>'''
 
 sheep_svg=(root/'assets/sheep.svg').read_text().replace('<svg ', '<svg aria-hidden="true" focusable="false" ', 1)
 sheep=f'''<div class="sheep-home"><div class="sheep-companion" hidden><button type="button" class="sheep-project-prompt" hidden>About this project</button><button class="sheep-button" type="button" aria-label="Say hello to the little sheep" aria-describedby="sheep-help"><span class="sheep-bubble" aria-hidden="true"></span>{sheep_svg}<span class="sheep-caption" aria-hidden="true">Say hello</span></button><span id="sheep-help" class="sr-only">Tap to say hello. Double-click me to alternate between a snack and a head pat, stroke my head for a pat, or hold and release for a little hop. Drag me to a new spot, or double-click empty space to grow a tuft of grass for me. I snack and nap while you read.</span><section class="sheep-guide-card" aria-labelledby="sheep-guide-title" hidden><div class="sheep-guide-heading"><span>READ ALONG</span><button type="button" class="sheep-guide-close" aria-label="Close project note">×</button></div><h2 id="sheep-guide-title"></h2><p class="sheep-guide-text"></p><div class="sheep-guide-footer"><span class="sheep-guide-count"></span><button type="button" class="sheep-guide-more">Tell me more</button></div><button type="button" class="sheep-auto" aria-pressed="true">Automatic notes: on</button></section><span class="sr-only sheep-status" role="status" aria-live="polite" aria-atomic="true"></span></div></div>'''
-summary=''.join(f'<article class="summary-item"><h3>{e(t)}</h3><p>{format_body(b)}</p></article>' for t,b in c['summary'])
+summary=''.join(f'<article class="summary-item"><h3>{e(t)}</h3><p>{format_body(b)}</p></article>' for t,b in ((x['title'],x['body']) for x in c['summary']))
 guide_json=json.dumps(c.get('sheepGuide', []),ensure_ascii=False).replace('<','\\u003c')
 css_version=hashlib.sha256((root/'style.css').read_bytes()).hexdigest()[:10]
 js_version=hashlib.sha256((root/'script.js').read_bytes()).hexdigest()[:10]
@@ -157,11 +103,12 @@ motion_json=json.dumps(json.loads((root/'assets/sheep-poses.json').read_text()),
 controller_version=hashlib.sha256((root/'bu-controller.js').read_bytes()).hexdigest()[:10]
 roam_version=hashlib.sha256((root/'sheep-roam.js').read_bytes()).hexdigest()[:10]
 sheep_version=hashlib.sha256((root/'sheep.js').read_bytes()).hexdigest()[:10]
+content_version=hashlib.sha256((root/'content-editor.js').read_bytes()).hexdigest()[:10]
 html=f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(c['name'])} · AI Product</title>
-<meta name="description" content="Qishan Shi: AI product experience at Qwen and Xiaohongshu, social anthropology at LSE, and creator projects."><meta name="theme-color" content="#faf9f6"><meta property="og:title" content="Qishan Shi · AI Product"><meta property="og:description" content="Agent evaluation, creator products, and cross-cultural research."><meta property="og:type" content="website"><meta property="og:url" content="https://shiqishan319-glitch.github.io/"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?v={css_version}"><script src="script.js?v={js_version}" defer></script><script src="bu-controller.js?v={controller_version}" defer></script><script src="sheep-roam.js?v={roam_version}" defer></script><script src="sheep.js?v={sheep_version}" defer></script></head>
+<meta name="description" content="Qishan Shi: AI agents and evaluation at Qwen, brand and creator workflows at Xiaohongshu, and independent product development."><meta name="theme-color" content="#faf9f6"><meta property="og:title" content="Qishan Shi · AI Product"><meta property="og:description" content="Skill evaluation, agent workflows, and independent product development."><meta property="og:type" content="website"><meta property="og:url" content="https://shiqishan319-glitch.github.io/"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?v={css_version}"><script src="script.js?v={js_version}" defer></script><script src="bu-controller.js?v={controller_version}" defer></script><script src="sheep-roam.js?v={roam_version}" defer></script><script src="sheep.js?v={sheep_version}" defer></script><script src="content-editor.js?v={content_version}" defer></script></head>
 <body><span class="sheep-dropping" aria-hidden="true" hidden><svg viewBox="0 0 28 20"><ellipse cx="14" cy="17" rx="12" ry="2" fill="#775d4520"/><ellipse cx="9" cy="13" rx="4.5" ry="3.5" fill="#92745d"/><ellipse cx="18" cy="13.5" rx="4.8" ry="3.5" fill="#80644f"/><ellipse cx="14" cy="8" rx="4.2" ry="3.7" fill="#a08369"/></svg></span><span class="meadow-grass" aria-hidden="true" hidden><svg viewBox="0 0 40 30" fill="none"><ellipse cx="20" cy="27" rx="17" ry="2" fill="#b6bd9633"/><path d="M20 27C15 22 10 17 4 17C9 22 11 26 12 27Z" fill="#899e73"/><path d="M19 27C16 15 13 10 10 7C11 17 10 23 14 27Z" fill="#708961"/><path d="M19 27C15 13 18 5 23 2C21 12 24 18 22 27Z" fill="#a5b47d"/><path d="M21 27C24 16 29 10 34 8C29 16 32 21 25 27Z" fill="#728f65"/><path d="M24 27C29 20 34 19 38 20C32 23 32 26 30 27Z" fill="#93aa75"/></svg></span><a class="skip" href="#education">Skip to content</a><div class="header-shell"><header class="site-header wrap"><div class="header-identity"><a class="brand" href="#home"><span class="brand-dot"></span>{e(c['name'])}</a><a class="header-cv" href="{e(c['cv'])}" download="Qishan-Shi-CV.pdf" aria-label="Download CV (Chinese PDF)" title="Download CV · Chinese PDF" inert>{icon('download')}CV</a></div><nav aria-label="Main navigation"><a href="#education">Education</a><a href="#experience">Experience</a><a href="#projects">Projects & awards</a><a href="#summary">Profile</a></nav></header><div class="reading-progress" aria-hidden="true"></div></div>
-<main class="wrap"><section class="hero" id="home" tabindex="-1"><div class="hero-copy"><div class="hero-kicker"><p class="eyebrow">{e(c['role'])}</p>{sheep}</div><h1>{name_heading}<span class="name-period" aria-hidden="true">.</span></h1><p class="hero-intro">{e(c['intro'])}</p><div class="hero-actions"><a class="cv-button" href="{e(c['cv'])}" download="Qishan-Shi-CV.pdf">{icon('download')}Download CV<span class="file-language">中文 PDF</span></a><a class="cv-preview" href="{e(c['cv'])}" target="_blank" rel="noopener noreferrer" aria-label="Preview CV (Chinese PDF, opens in a new tab)">Preview{icon('external')}</a>{linkedin}<a class="action-link" href="https://github.com/shiqishan319-glitch" target="_blank" rel="noopener noreferrer">{icon('github')}GitHub{icon('external')}<span class="sr-only"> (opens in a new tab)</span></a></div><div class="hero-contact"><a href="mailto:{e(c['email'])}">{icon('mail')}{e(c['email'])}</a><button class="copy-email" type="button" data-email="{e(c['email'])}" aria-label="Copy email address" title="Copy email address" hidden>{icon('copy')}</button><span class="copy-status" role="status" aria-live="polite"></span></div></div><div class="focus-canvas" aria-label="Explore my focus areas">
+<main class="wrap"><section class="hero" id="home" tabindex="-1"><div class="hero-copy"><div class="hero-kicker"><p class="eyebrow">{e(c['role'])}</p>{sheep}</div><h1>{name_heading}<span class="name-period" aria-hidden="true">.</span></h1><p class="hero-intro">{e(c['intro'])}</p><div class="hero-actions"><a class="cv-button" href="{e(c['cv'])}" download="Qishan-Shi-CV.pdf">{icon('download')}Download CV<span class="file-language">{e(c.get("cvLabel", "中文 PDF"))}</span></a><a class="cv-preview" href="{e(c['cv'])}" target="_blank" rel="noopener noreferrer" aria-label="Preview CV (Chinese PDF, opens in a new tab)">Preview{icon('external')}</a>{linkedin}<a class="action-link" href="{e(c['github'])}" target="_blank" rel="noopener noreferrer">{icon('github')}GitHub{icon('external')}<span class="sr-only"> (opens in a new tab)</span></a></div><div class="hero-contact"><a href="mailto:{e(c['email'])}">{icon('mail')}{e(c['email'])}</a><button class="copy-email" type="button" data-email="{e(c['email'])}" aria-label="Copy email address" title="Copy email address" hidden>{icon('copy')}</button><span class="copy-status" role="status" aria-live="polite"></span></div></div><div class="focus-canvas" aria-label="Explore my focus areas">
 <div class="canvas-orbit" aria-hidden="true"></div><span class="canvas-caption">A FEW THINGS I WORK ON</span>
 <a class="focus-card focus-primary" href="#agent-teams"><div class="focus-card-top"><span>01 / AGENT EVALUATION</span>{icon('external')}</div><div class="mini-workflow" aria-hidden="true"><span class="workflow-node"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="4" width="18" height="24" rx="3"/><path d="M11 10h10m-10 6h10m-10 6h6"/></svg></span><i></i><span class="workflow-node node-purple"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 3 29 16 16 29 3 16 16 3Z"/><path d="m12 11 8 5-8 5V11Z"/></svg></span><i></i><span class="workflow-node"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="12"/><path d="m10 16 4 4 8-8"/></svg></span></div><strong>Test. Compare. Iterate.</strong><span class="focus-card-caption">From Skill instructions to better outcomes.</span></a>
 <a class="focus-card focus-secondary" href="#creator-assistant"><span class="focus-card-symbol" aria-hidden="true">✳</span><div><span class="focus-card-number">02 / CREATOR TOOLS</span><strong>Ideas into workflows.</strong></div>{icon('external')}</a>
