@@ -104,6 +104,8 @@
 
 `site.cv` 默认链接到 `sqs-resume` 仓库的 `base.tex` 编译结果；`site.cvLabel` 是按钮上的版本说明。更新时用 XeLaTeX 编译 `base.tex`，检查 PDF，再替换 `assets/Qishan-Shi-CV.pdf`，同时更新链接的 `?v=` 版本标记以避免缓存旧文件。网页采用各简历版本的信息并集、同口径数字的保守值；下载的基础版保持其原文，不自动套用网页口径。
 
+`site.cvEnglish` 是英文版链接，`site.cvEnglishLabel` 是英文下载入口文字。英文版来源为简历仓库中可独立编译的 `english/base.tex`，默认无头像；编译后替换 `assets/Qishan-Shi-CV-English.pdf` 并更新对应的 `?v=` 标记。主 Download CV 按钮和顶部 CV 按钮继续默认下载中文，旁边的 English CV 下载英文。
+
 修改后用 GitHub 网页直接编辑也可以：打开仓库中的 `content.json`，点铅笔图标，保存到 `main` 分支。GitHub Pages 通常会在一分钟内更新。
 
 如果页面没有变化，先确认 JSON 的引号、逗号与括号没有被删掉。JSON 有格式错误时，页面会保留原本的备用文案，不会白屏。

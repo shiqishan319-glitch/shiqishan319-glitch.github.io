@@ -106,6 +106,13 @@
     const copy = document.querySelector('.copy-email'); if (copy) copy.dataset.email = data.site.email;
     for (const link of document.querySelectorAll('.cv-button,.cv-preview,.header-cv')) link.href = data.site.cv;
     setText(document.querySelector('.file-language'), data.site.cvLabel || '中文 PDF');
+    const englishCV = document.querySelector('.cv-english');
+    if (englishCV) {
+      englishCV.hidden = !data.site.cvEnglish;
+      if (data.site.cvEnglish) englishCV.href = data.site.cvEnglish;
+      setText(englishCV.querySelector('span'), data.site.cvEnglishLabel || 'English CV');
+    }
+
     const linkedin = document.querySelector('.hero-actions a[href*="linkedin"]'); if (linkedin) linkedin.href = data.site.linkedin;
     const github = document.querySelector('.hero-actions a[href*="github"]'); if (github) github.href = data.site.github;
 
