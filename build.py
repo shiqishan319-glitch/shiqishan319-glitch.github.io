@@ -60,6 +60,16 @@ def details(item):
             '<span class="expand-icon" aria-hidden="true">+</span></summary>'
             f'<div class="notebook-fold"><div class="notebook-trail" aria-label="Project reasoning flow">{trail}</div><div class="notebook-stages">{stages}</div></div></details>')
 
+def demo(item):
+    d = item.get('demo')
+    if not d: return ''
+    return (f'<figure class="project-demo"><figcaption><h4>{e(d["title"])}</h4>'
+            f'<p class="demo-meta">{e(d["caption"])}</p></figcaption>'
+            f'<video controls playsinline preload="none" width="1920" height="1080" poster="{e(d["poster"])}" src="{e(d["src"])}" aria-label="{e(d["title"])}"></video>'
+            f'<p class="demo-description">{e(d["description"])}</p>'
+            f'<div class="demo-links"><a href="{e(d["repositoryUrl"])}" target="_blank" rel="noopener noreferrer">{icon("github")}View project on GitHub<span class="sr-only"> (opens in a new tab)</span>{icon("external")}</a>'
+            f'<a href="{e(d["src"])}" download>Download video{icon("download")}</a></div></figure>')
+
 linkedin=''
 if c.get('linkedin'):
     assert c['linkedin'].startswith('https://www.linkedin.com/in/'), 'Use the full LinkedIn profile URL'
@@ -95,7 +105,7 @@ for anchor,key in [('creator-assistant','creatorAssistant'),('china-open','china
     if p.get('workflow'):
         workflow='<div class="project-workflow" aria-label="Assistant workflow">'+'<i aria-hidden="true"></i>'.join(f'<span>{e(step)}</span>' for step in p['workflow'])+'</div>'
     items=p.get('bullets',[{'label':p.get('bulletLabel',''),'body':p.get('body','')}])
-    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{format_body(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(items)}{details(p)}</article>'''
+    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{format_body(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(items)}{demo(p)}{details(p)}</article>'''
 
 sheep_svg=(root/'assets/sheep.svg').read_text().replace('<svg ', '<svg aria-hidden="true" focusable="false" ', 1)
 sheep=f'''<div class="sheep-home"><div class="sheep-companion" hidden><button type="button" class="sheep-project-prompt" hidden>About this project</button><button class="sheep-button" type="button" aria-label="Say hello to the little sheep" aria-describedby="sheep-help"><span class="sheep-bubble" aria-hidden="true"></span>{sheep_svg}<span class="sheep-caption" aria-hidden="true">Say hello</span></button><span id="sheep-help" class="sr-only">Tap to say hello. Double-click me to alternate between a snack and a head pat, stroke my head for a pat, or hold and release for a little hop. Drag me to a new spot, or double-click empty space to grow a tuft of grass for me. I snack and nap while you read.</span><section class="sheep-guide-card" aria-labelledby="sheep-guide-title" hidden><div class="sheep-guide-heading"><span>READ ALONG</span><button type="button" class="sheep-guide-close" aria-label="Close project note">×</button></div><h2 id="sheep-guide-title"></h2><p class="sheep-guide-text"></p><div class="sheep-guide-footer"><span class="sheep-guide-count"></span><button type="button" class="sheep-guide-more">Tell me more</button></div><button type="button" class="sheep-auto" aria-pressed="true">Automatic notes: on</button></section><span class="sr-only sheep-status" role="status" aria-live="polite" aria-atomic="true"></span></div></div>'''

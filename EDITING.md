@@ -109,3 +109,10 @@
 修改后用 GitHub 网页直接编辑也可以：打开仓库中的 `content.json`，点铅笔图标，保存到 `main` 分支。GitHub Pages 通常会在一分钟内更新。
 
 如果页面没有变化，先确认 JSON 的引号、逗号与括号没有被删掉。JSON 有格式错误时，页面会保留原本的备用文案，不会白屏。
+
+
+## 个人项目展示视频
+
+编辑 `projects.creatorAssistant.demo`：`title` 是标题，`caption` 是时长与语言说明，`description` 是内容简介，`src` 是视频地址，`poster` 是封面地址，`repositoryUrl` 是项目 GitHub 链接。替换视频时将文件放入 `assets/`，再修改对应地址；删除整个 `demo` 字段可隐藏展示区。视频由访客手动播放，不自动下载整段视频。
+
+当前使用项目仓库 README 中公开的 `sqsagent-promo.mp4`（约 42 秒，1080p，无音轨）。网页副本为 `assets/creator-assistant-demo.mp4`，封面取自该视频；画面保留虚构演示内容的说明。原项目仓库不作修改。

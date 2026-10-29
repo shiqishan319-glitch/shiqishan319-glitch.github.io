@@ -44,6 +44,17 @@
     details.innerHTML = notebookMarkup(notebook);
   }
 
+  function renderDemo(root, demo) {
+    let figure = direct(root, ':scope > .project-demo');
+    if (!demo) { figure?.remove(); return; }
+    if (!figure) { figure = document.createElement('figure'); figure.className = 'project-demo'; }
+    figure.innerHTML = `<figcaption><h4>${escapeHTML(demo.title)}</h4><p class="demo-meta">${escapeHTML(demo.caption)}</p></figcaption>
+      <video controls playsinline preload="none" width="1920" height="1080" poster="${escapeHTML(demo.poster)}" src="${escapeHTML(demo.src)}" aria-label="${escapeHTML(demo.title)}"></video>
+      <p class="demo-description">${escapeHTML(demo.description)}</p>
+      <div class="demo-links"><a href="${escapeHTML(demo.repositoryUrl)}" target="_blank" rel="noopener noreferrer"><img class="icon github-icon" src="assets/logos/github.svg" width="18" height="18" alt="">View project on GitHub<span class="sr-only"> (opens in a new tab)</span><span aria-hidden="true">↗</span></a><a href="${escapeHTML(demo.src)}" download>Download video<span aria-hidden="true">↓</span></a></div>`;
+    root.insertBefore(figure, direct(root, ':scope > .project-details'));
+  }
+
   function renderProject(project) {
     const root = document.getElementById(project.id);
     if (!root) return;
@@ -130,6 +141,7 @@
       const workflow = direct(assistantRoot, '.project-workflow'); if (workflow) workflow.innerHTML = assistant.workflow.map((step, index) => `${index ? '<i aria-hidden="true"></i>' : ''}<span>${escapeHTML(step)}</span>`).join('');
       const list = direct(assistantRoot, ':scope > .bullet-list'); if (list) list.innerHTML = `<li><p>${inline(assistant.body)}</p></li>`;
       renderNotebook(assistantRoot, assistant.notebook);
+      renderDemo(assistantRoot, assistant.demo);
     }
     renderStandalone(document.getElementById('china-open'), { title: data.projects.chinaOpen.title, label: data.projects.chinaOpen.label, bullets: [{ label: data.projects.chinaOpen.bulletLabel, body: data.projects.chinaOpen.body }] });
     renderStandalone(document.getElementById('competition-awards'), data.projects.awards);

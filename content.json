@@ -298,6 +298,14 @@
             "Applied initially across 3 accounts and 20+ posts, with approximately 18% higher average readership reported. This initial trial helped inform further iteration."
           ]
         ]
+      },
+      "demo": {
+        "title": "See the workspace in action",
+        "caption": "42-second walkthrough · Chinese interface · Silent video",
+        "description": "Explore past posts, invite simulated readers to discuss a draft, and refine the next piece in a writing workspace. The video uses fictional demonstration content.",
+        "src": "assets/creator-assistant-demo.mp4",
+        "poster": "assets/creator-assistant-poster.jpg",
+        "repositoryUrl": "https://github.com/tuteng0915/XHS-Creator-Assistant"
       }
     },
     "chinaOpen": {

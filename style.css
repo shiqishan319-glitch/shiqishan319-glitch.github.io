@@ -215,3 +215,16 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 @media(max-width:640px){
   .hero.is-reading .focus-primary,.hero.is-reading .focus-secondary,.hero.is-reading .focus-tertiary{transform:none;opacity:1}
 }
+
+/* The project walkthrough stays quiet until the visitor chooses to play it. */
+.project-demo{margin:26px 0 22px;max-width:100%;min-width:0}
+.project-demo h4{font-size:16px;line-height:1.5;margin:0 0 3px;font-weight:600}
+.project-demo .demo-meta{font-size:11px;line-height:1.6;color:var(--muted);margin:0 0 13px}
+.project-demo video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#f8f2f3;border-radius:12px;border:1px solid #ded6e4}
+.project-demo .demo-description{font-size:12px;line-height:1.75;color:var(--muted);margin:12px 0}
+.demo-links{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:12px;color:var(--purple)}
+.demo-links a{display:inline-flex;align-items:center;gap:7px;min-height:40px;text-underline-offset:4px}
+.demo-links a:hover{text-decoration:underline}
+.demo-links .icon{width:16px;height:16px;flex-basis:16px}
+@media(max-width:640px){.project-demo{margin-top:22px}.project-demo video{border-radius:8px}.demo-links{gap:4px 18px}.project-demo .demo-meta{font-size:10px}}
+@media print{.project-demo{display:none}}

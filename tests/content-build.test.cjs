@@ -17,6 +17,10 @@ test('a clean build publishes JSON edits in fallback copy, notes, tips and CV li
     data.experience[0].projects[0].bullets[0].body = '[[Edited term|Edited explanation]]';
     data.experience[0].projects[0].notebook.stages[0][2] = 'Edited project notebook';
     data.projects.creatorAssistant.body = 'Edited independent project';
+    data.projects.creatorAssistant.demo.src = 'assets/edited-demo.mp4';
+    data.projects.creatorAssistant.demo.poster = 'assets/edited-poster.jpg';
+    data.projects.creatorAssistant.demo.title = 'Edited demo title';
+    data.projects.creatorAssistant.demo.repositoryUrl = 'https://github.com/example/edited-project';
     data.summary[0].body = 'Edited profile';
     data.sheepGuide[0].notes[0] = 'Edited sheep explanation';
     data.site.cv = 'assets/base-new.pdf?v=revision';
@@ -31,6 +35,12 @@ test('a clean build publishes JSON edits in fallback copy, notes, tips and CV li
     assert(!html.includes('cv-preview'));
     assert(html.includes('download="Qishan-Shi-CV-Chinese.pdf"'));
     assert(!html.includes('[[Edited term|'));
+    assert(html.includes('src="assets/edited-demo.mp4"'));
+    assert(html.includes('poster="assets/edited-poster.jpg"'));
+    assert(html.includes('Edited demo title'));
+    assert(html.includes('href="https://github.com/example/edited-project"'));
+    assert(html.includes('<video controls playsinline preload="none"'));
+    assert(!html.includes(' autoplay'));
     assert(html.includes('class="project-details behind-work"'));
     assert(html.includes('content-editor.js?v='));
     assert(!fs.readFileSync(path.join(dir, 'script.js'), 'utf8').includes('Applied across 50+ posts'));
