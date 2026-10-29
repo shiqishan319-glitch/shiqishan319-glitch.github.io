@@ -90,10 +90,9 @@
     "email": "shiqishan319@gmail.com",
     "linkedin": "https://www.linkedin.com/in/qishan-shi-373b38298/",
     "github": "https://github.com/shiqishan319-glitch",
-    "cv": "assets/Qishan-Shi-CV.pdf?v=587cbd8246",
-    "cvLabel": "中文 PDF",
-    "cvEnglish": "assets/Qishan-Shi-CV-English.pdf?v=b961bf7fb1",
-    "cvEnglishLabel": "English CV"
+    "cv": "assets/Qishan-Shi-CV-English.pdf?v=b961bf7fb1",
+    "cvChinese": "assets/Qishan-Shi-CV.pdf?v=587cbd8246",
+    "cvChineseLabel": "中文简历"
   },
   "hero": {
     "eyebrow": "AI Product · Agents, Evaluation & Workflows",

@@ -102,9 +102,9 @@
 
 正文、浮窗解释、项目笔记（`notebook`）和小羊解说（`sheepGuide`）均来自 `content.json`。同一事实出现在多个位置时，请一起更新。运行 `python3 build.py` 会生成同样内容的静态备用页面；不要在 `script.js` 中另写一份项目文案。
 
-`site.cv` 默认链接到 `sqs-resume` 仓库的 `base.tex` 编译结果；`site.cvLabel` 是按钮上的版本说明。更新时用 XeLaTeX 编译 `base.tex`，检查 PDF，再替换 `assets/Qishan-Shi-CV.pdf`，同时更新链接的 `?v=` 版本标记以避免缓存旧文件。网页采用各简历版本的信息并集、同口径数字的保守值；下载的基础版保持其原文，不自动套用网页口径。
+`site.cv` 是默认英文简历链接，来源为简历仓库中可独立编译、默认无头像的 `english/base.tex`。编译后替换 `assets/Qishan-Shi-CV-English.pdf` 并更新链接的 `?v=` 标记。主 Download CV 按钮和顶部 CV 按钮都下载英文。
 
-`site.cvEnglish` 是英文版链接，`site.cvEnglishLabel` 是英文下载入口文字。英文版来源为简历仓库中可独立编译的 `english/base.tex`，默认无头像；编译后替换 `assets/Qishan-Shi-CV-English.pdf` 并更新对应的 `?v=` 标记。主 Download CV 按钮和顶部 CV 按钮继续默认下载中文，旁边的 English CV 下载英文。
+`site.cvChinese` 是中文简历链接，`site.cvChineseLabel` 是旁边的下载入口文字（默认“中文简历”）。中文 PDF 由简历仓库根目录的 `base.tex` 编译，替换 `assets/Qishan-Shi-CV.pdf` 并更新对应版本标记。两个入口均直接下载，不提供 Preview。网页采用各简历版本的信息并集、同口径数字的保守值；中文基础 PDF 保持其原文，不自动套用网页口径。
 
 修改后用 GitHub 网页直接编辑也可以：打开仓库中的 `content.json`，点铅笔图标，保存到 `main` 分支。GitHub Pages 通常会在一分钟内更新。
 
