@@ -311,7 +311,7 @@
     "imagegenSkills": {
       "title": "Awesome Codex ImageGen Skills",
       "label": "Contributor · Visual Skill curation & testing",
-      "body": "Contributed to a bilingual collection that helps creators discover and compare reusable visual workflows. The collection spans [[68 Skill entries|Collection snapshot: 68 entries across eight categories. Some entries include multiple sub-Skills.]] and [[296 generated examples|Generated outputs from four shared synthetic input scenarios: architecture, landscapes, people with props, and interacting animals. These are examples, not a ranked model benchmark.]], with source attribution, usage instructions, and notes on observed strengths and limitations.",
+      "body": "Contributed to a bilingual collection of [[68 Skill entries|Collection snapshot: 68 entries across eight categories. Some entries include multiple sub-Skills.]] and [[296 generated examples|Generated outputs from four shared synthetic input scenarios: architecture, landscapes, people with props, and interacting animals. These are examples, not a ranked model benchmark.]], helping creators compare visual workflows through shared test inputs, practical notes, and credited sources.",
       "notebook": {
         "trail": [
           "Find visual methods",
@@ -337,8 +337,8 @@
         ]
       },
       "showcase": {
-        "title": "Same subjects, different visual methods",
-        "caption": "Architecture · Landscape · People & props · Animals. Generated examples from the collection; original Skill authors credited below.",
+        "title": "Same subjects, two visual styles",
+        "caption": "Four shared inputs, from architecture to animals. Click a preview for full-size examples.",
         "items": [
           {
             "title": "Photo Riso Poster",

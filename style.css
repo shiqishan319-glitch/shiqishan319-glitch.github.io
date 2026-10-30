@@ -229,20 +229,21 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 @media(max-width:640px){.project-demo{margin-top:22px}.project-demo video{border-radius:8px}.demo-links{gap:4px 18px}.project-demo .demo-meta{font-size:10px}}
 @media print{.project-demo{display:none}}
 
-#imagegen-skills{padding:28px 0 30px;margin-bottom:10px;border-bottom:1px solid #dce3d8}
+#imagegen-skills{padding:22px 0 24px;margin-bottom:8px;border-bottom:1px solid #dce3d8}
 #imagegen-skills>.entry-header{display:block}
 #imagegen-skills .project-label{display:inline-block;margin-top:7px;color:#6e806b}
-.project-showcase{margin:22px 0}
+.project-showcase{margin:15px 0}
 .project-showcase h4{font-size:15px;font-weight:600;margin:0 0 5px}
-.showcase-caption{font-size:12px;line-height:1.7;color:var(--muted);max-width:680px;margin:0 0 15px}
-.showcase-grid{display:grid;gap:18px}
+.showcase-caption{font-size:12px;line-height:1.7;color:var(--muted);max-width:680px;margin:0 0 10px}
+.showcase-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .showcase-grid figure{margin:0;min-width:0}
 .showcase-image{display:block;border-radius:10px;overflow:hidden;background:#f5f2e9}
 .showcase-image img{display:block;width:100%;height:auto}
-.showcase-grid figcaption{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 15px;padding:8px 0;font-size:12px}
+.showcase-grid figcaption{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 12px;padding:6px 0;font-size:12px}
 .showcase-grid figcaption span{color:var(--muted);font-size:11px}
 .showcase-grid figcaption a{text-decoration:underline;text-underline-offset:3px}
-.project-showcase .demo-links{margin-top:7px}
+.project-showcase .demo-links{margin-top:3px}
+#imagegen-skills .project-details.behind-work{margin-top:16px}
 @media(prefers-reduced-motion:no-preference){.showcase-image img{transition:transform .25s ease}.showcase-image:hover img{transform:scale(1.015)}}
-@media(max-width:640px){#imagegen-skills{padding:24px 0}.showcase-grid{gap:12px}.showcase-image{border-radius:6px}}
+@media(max-width:640px){#imagegen-skills{padding:20px 0}.showcase-grid{grid-template-columns:1fr;gap:10px;max-width:420px}.showcase-image{border-radius:6px}}
 @media print{.project-showcase{display:none}}
