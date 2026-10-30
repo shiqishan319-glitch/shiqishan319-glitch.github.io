@@ -21,6 +21,9 @@ test('a clean build publishes JSON edits in fallback copy, notes, tips and CV li
     data.projects.creatorAssistant.demo.poster = 'assets/edited-poster.jpg';
     data.projects.creatorAssistant.demo.title = 'Edited demo title';
     data.projects.creatorAssistant.demo.repositoryUrl = 'https://github.com/example/edited-project';
+    data.projects.imagegenSkills.body = 'Edited visual collection';
+    data.projects.imagegenSkills.showcase.items[0].author = 'Updated Skill credit';
+    data.projects.imagegenSkills.showcase.links[0].url = 'https://github.com/example/visual-collection';
     data.summary[0].body = 'Edited profile';
     data.sheepGuide[0].notes[0] = 'Edited sheep explanation';
     data.site.cv = 'assets/base-new.pdf?v=revision';
@@ -42,6 +45,10 @@ test('a clean build publishes JSON edits in fallback copy, notes, tips and CV li
     assert(html.includes('<video controls playsinline preload="none"'));
     assert(!html.includes(' autoplay'));
     assert(html.includes('class="project-details behind-work"'));
+    assert(html.includes('Edited visual collection'));
+    assert(html.includes('Updated Skill credit'));
+    assert(html.includes('href="https://github.com/example/visual-collection"'));
+    assert.equal((html.match(/id="imagegen-skills"/g) || []).length, 1);
     assert(html.includes('content-editor.js?v='));
     assert(!fs.readFileSync(path.join(dir, 'script.js'), 'utf8').includes('Applied across 50+ posts'));
     execFileSync('python3', ['build.py'], { cwd: dir });

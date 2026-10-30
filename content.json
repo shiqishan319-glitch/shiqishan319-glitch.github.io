@@ -308,6 +308,71 @@
         "repositoryUrl": "https://github.com/tuteng0915/XHS-Creator-Assistant"
       }
     },
+    "imagegenSkills": {
+      "title": "Awesome Codex ImageGen Skills",
+      "label": "Contributor · Visual Skill curation & testing",
+      "body": "Contributed to a bilingual collection that helps creators discover and compare reusable visual workflows. The collection spans [[68 Skill entries|Collection snapshot: 68 entries across eight categories. Some entries include multiple sub-Skills.]] and [[296 generated examples|Generated outputs from four shared synthetic input scenarios: architecture, landscapes, people with props, and interacting animals. These are examples, not a ranked model benchmark.]], with source attribution, usage instructions, and notes on observed strengths and limitations.",
+      "notebook": {
+        "trail": [
+          "Find visual methods",
+          "Try shared inputs",
+          "Document the differences"
+        ],
+        "stages": [
+          [
+            "01",
+            "The problem",
+            "Visual Skills are scattered across repositories, and polished examples alone do not show how a method behaves on different subjects."
+          ],
+          [
+            "02",
+            "The approach",
+            "Organize methods into eight categories and compare outputs from four shared input scenarios. Document inputs, outputs, workflow structure, licensing, and practical observations in Chinese and English."
+          ],
+          [
+            "03",
+            "The result",
+            "A browsable collection with compact previews, full-resolution examples, and links to original authors. Readers can compare visual approaches and choose a Skill to try."
+          ]
+        ]
+      },
+      "showcase": {
+        "title": "Same subjects, different visual methods",
+        "caption": "Architecture · Landscape · People & props · Animals. Generated examples from the collection; original Skill authors credited below.",
+        "items": [
+          {
+            "title": "Photo Riso Poster",
+            "author": "luckdvr",
+            "authorUrl": "https://github.com/luckdvr/photo-riso-poster",
+            "src": "assets/imagegen-skills/riso.webp",
+            "alt": "Four risograph-style outputs: a cafe, a mountain lake, two people with a camera, and a cat and dog.",
+            "url": "https://github.com/tuteng0915/Awesome-Codex-ImageGen-Skills/tree/main/examples/photo-riso-poster",
+            "width": 1600,
+            "height": 504
+          },
+          {
+            "title": "Photo to Organic Knit",
+            "author": "NalaZhang27",
+            "authorUrl": "https://github.com/NalaZhang27/photo-to-organic-knit",
+            "src": "assets/imagegen-skills/knit.webp",
+            "alt": "The same four subjects reinterpreted as textured knit and wool compositions.",
+            "url": "https://github.com/tuteng0915/Awesome-Codex-ImageGen-Skills/tree/main/examples/photo-to-organic-knit",
+            "width": 1600,
+            "height": 504
+          }
+        ],
+        "links": [
+          {
+            "label": "Explore collection on GitHub",
+            "url": "https://github.com/tuteng0915/Awesome-Codex-ImageGen-Skills"
+          },
+          {
+            "label": "See the shared inputs",
+            "url": "https://github.com/tuteng0915/Awesome-Codex-ImageGen-Skills/tree/main/fixtures"
+          }
+        ]
+      }
+    },
     "chinaOpen": {
       "title": "China Open",
       "label": "Overseas social media operations",
@@ -391,6 +456,15 @@
         "A few good posts can be the start of a repeatable approach. The 42-second video below shows this creator workspace in action.",
         "The workspace brings together account diagnosis, simulated reader discussions, and a writing assistant. Creators choose which feedback to use; the video uses fictional demo content.",
         "The initial trial covered 3 accounts and 20+ posts, with approximately 18% higher average readership reported. You can explore the implementation through the project’s GitHub link."
+      ]
+    },
+    {
+      "id": "imagegen-skills",
+      "title": "Visual Skills · Explore & compare",
+      "notes": [
+        "One set of subjects, many ways to draw them. This collection makes visual Skills easier to browse and compare.",
+        "Qishan contributed to the collection. It uses four shared input scenarios and documents each Skill’s workflow, original author, and observed strengths and limitations.",
+        "Try comparing the cafe, the two people, or the cat and dog across these previews. Each image links to the full examples; the collection links back to the original Skill authors."
       ]
     },
     {

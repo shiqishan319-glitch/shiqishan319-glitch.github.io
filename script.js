@@ -149,7 +149,7 @@ if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: re
       revealObserver.unobserve(entry.target);
     }
   }, { rootMargin: '0px 0px -12% 0px', threshold: 0.14 });
-  for (const item of document.querySelectorAll('.work-project .project-heading, #creator-assistant > .entry-header')) {
+  for (const item of document.querySelectorAll('.work-project .project-heading, #creator-assistant > .entry-header, #imagegen-skills > .entry-header')) {
     item.classList.add('motion-reveal');
     revealObserver.observe(item);
   }

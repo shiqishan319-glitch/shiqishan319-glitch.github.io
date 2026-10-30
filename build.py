@@ -60,6 +60,17 @@ def details(item):
             '<span class="expand-icon" aria-hidden="true">+</span></summary>'
             f'<div class="notebook-fold"><div class="notebook-trail" aria-label="Project reasoning flow">{trail}</div><div class="notebook-stages">{stages}</div></div></details>')
 
+def showcase(item):
+    s = item.get('showcase')
+    if not s: return ''
+    cards = ''.join(
+        f'<figure><a class="showcase-image" href="{e(x["url"])}" target="_blank" rel="noopener noreferrer" aria-label="View {e(x["title"])} examples (opens in a new tab)">'
+        f'<img src="{e(x["src"])}" alt="{e(x["alt"])}" width="{x["width"]}" height="{x["height"]}" loading="lazy" decoding="async"></a>'
+        f'<figcaption><strong>{e(x["title"])}</strong><span>Skill by <a href="{e(x["authorUrl"])}" target="_blank" rel="noopener noreferrer">{e(x["author"])}</a></span></figcaption></figure>'
+        for x in s['items'])
+    links = ''.join(f'<a href="{e(x["url"])}" target="_blank" rel="noopener noreferrer">{e(x["label"])}{icon("external")}<span class="sr-only"> (opens in a new tab)</span></a>' for x in s['links'])
+    return f'<section class="project-showcase" aria-label="{e(s["title"])}"><h4>{e(s["title"])}</h4><p class="showcase-caption">{e(s["caption"])}</p><div class="showcase-grid">{cards}</div><div class="demo-links">{links}</div></section>'
+
 def demo(item):
     d = item.get('demo')
     if not d: return ''
@@ -99,13 +110,13 @@ for x in c['experience']:
     if 'bullets' in x:parts+=bullets(x['bullets'])
     experience+=f'''<article class="experience-entry" id="{ {"Alibaba · Qwen":"qwen-experience", "Xiaohongshu · Pugongying":"creator-platform", "Publicis Groupe":"publicis"}[x["company"]] }"><header class="entry-header"><div class="organization">{logo(LOGOS[x['company']])}<div class="organization-copy"><h3>{e(x['company'])}</h3><p class="entry-role">{e(x['role'])}</p></div></div><span class="date">{e(x['date'])}</span></header>{parts}</article>'''
 projects=''
-for anchor,key in [('creator-assistant','creatorAssistant'),('china-open','chinaOpen'),('competition-awards','awards')]:
+for anchor,key in [('creator-assistant','creatorAssistant'),('imagegen-skills','imagegenSkills'),('china-open','chinaOpen'),('competition-awards','awards')]:
     p=c['projects'][key]
     workflow=''
     if p.get('workflow'):
         workflow='<div class="project-workflow" aria-label="Assistant workflow">'+'<i aria-hidden="true"></i>'.join(f'<span>{e(step)}</span>' for step in p['workflow'])+'</div>'
     items=p.get('bullets',[{'label':p.get('bulletLabel',''),'body':p.get('body','')}])
-    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{format_body(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(items)}{demo(p)}{details(p)}</article>'''
+    projects+=f'''<article class="standalone-project" id="{anchor}" tabindex="-1"><header class="entry-header"><div class="project-title-row"><h3>{format_body(p['title'])}</h3>{permalink(anchor,p['title'])}</div><span class="project-label">{format_body(p['label'])}</span></header>{workflow}{bullets(items)}{demo(p)}{showcase(p)}{details(p)}</article>'''
 
 sheep_svg=(root/'assets/sheep.svg').read_text().replace('<svg ', '<svg aria-hidden="true" focusable="false" ', 1)
 sheep=f'''<div class="sheep-home"><div class="sheep-companion" hidden><button type="button" class="sheep-project-prompt" hidden>About this project</button><button class="sheep-button" type="button" aria-label="Say hello to the little sheep" aria-describedby="sheep-help"><span class="sheep-bubble" aria-hidden="true"></span>{sheep_svg}<span class="sheep-caption" aria-hidden="true">Say hello</span></button><span id="sheep-help" class="sr-only">Tap to say hello. Double-click me to alternate between a snack and a head pat, stroke my head for a pat, or hold and release for a little hop. Drag me to a new spot, or double-click empty space to grow a tuft of grass for me. I snack and nap while you read.</span><section class="sheep-guide-card" aria-labelledby="sheep-guide-title" hidden><div class="sheep-guide-heading"><span>READ ALONG</span><button type="button" class="sheep-guide-close" aria-label="Close project note">×</button></div><h2 id="sheep-guide-title"></h2><p class="sheep-guide-text"></p><div class="sheep-guide-footer"><span class="sheep-guide-count"></span><button type="button" class="sheep-guide-more">Tell me more</button></div><button type="button" class="sheep-auto" aria-pressed="true">Automatic notes: on</button></section><span class="sr-only sheep-status" role="status" aria-live="polite" aria-atomic="true"></span></div></div>'''
@@ -134,4 +145,4 @@ html=f'''<!doctype html>
 <section class="resume-section" id="summary" tabindex="-1">{heading('profile','Personal profile')}<div class="summary-grid">{summary}</div></section></main>
 <footer class="wrap"><a class="footer-email" href="mailto:{e(c['email'])}">{icon('mail')}Email Qishan</a><span>© 2026 {e(c['name'])}</span><a href="#home">{icon('up')}Back to top</a></footer><script type="application/json" id="sheep-motion-data">{motion_json}</script><script type="application/json" id="sheep-guide-data">{guide_json}</script></body></html>'''
 (root/'index.html').write_text(html)
-print('Built resume-layout website: 2 education entries, 3 internships, 3 projects/awards entries, 4 profile points.')
+print(f'Built resume-layout website: {len(c["education"])} education entries, {len(c["experience"])} internships, {len(c["projects"])} projects/awards entries, {len(c["summary"])} profile points.')

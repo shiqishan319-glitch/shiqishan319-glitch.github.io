@@ -67,6 +67,19 @@
     root.insertBefore(figure, direct(root, ':scope > .project-details'));
   }
 
+  function renderShowcase(root, showcase) {
+    let section = direct(root, ':scope > .project-showcase');
+    if (!showcase) { section?.remove(); return; }
+    if (!section) {
+      section = document.createElement('section'); section.className = 'project-showcase';
+      root.insertBefore(section, direct(root, ':scope > .project-details'));
+    }
+    section.setAttribute('aria-label', showcase.title);
+    section.innerHTML = `<h4>${escapeHTML(showcase.title)}</h4><p class="showcase-caption">${escapeHTML(showcase.caption)}</p>
+      <div class="showcase-grid">${showcase.items.map(item => `<figure><a class="showcase-image" href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHTML(item.title)} examples (opens in a new tab)"><img src="${escapeHTML(item.src)}" alt="${escapeHTML(item.alt)}" width="${Number(item.width)}" height="${Number(item.height)}" loading="lazy" decoding="async"></a><figcaption><strong>${escapeHTML(item.title)}</strong><span>Skill by <a href="${escapeHTML(item.authorUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(item.author)}</a></span></figcaption></figure>`).join('')}</div>
+      <div class="demo-links">${showcase.links.map(link => `<a href="${escapeHTML(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(link.label)}<span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>`).join('')}</div>`;
+  }
+
   function renderProject(project) {
     const root = document.getElementById(project.id);
     if (!root) return;
@@ -154,6 +167,12 @@
       const list = direct(assistantRoot, ':scope > .bullet-list'); if (list) list.innerHTML = `<li><p>${inline(assistant.body)}</p></li>`;
       renderNotebook(assistantRoot, assistant.notebook);
       renderDemo(assistantRoot, assistant.demo);
+    }
+    const skills = data.projects.imagegenSkills, skillsRoot = document.getElementById('imagegen-skills');
+    if (skills && skillsRoot) {
+      renderStandalone(skillsRoot, { ...skills, bullets: [{ body: skills.body }] });
+      renderNotebook(skillsRoot, skills.notebook);
+      renderShowcase(skillsRoot, skills.showcase);
     }
     renderStandalone(document.getElementById('china-open'), { title: data.projects.chinaOpen.title, label: data.projects.chinaOpen.label, bullets: [{ label: data.projects.chinaOpen.bulletLabel, body: data.projects.chinaOpen.body }] });
     renderStandalone(document.getElementById('competition-awards'), data.projects.awards);

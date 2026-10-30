@@ -208,9 +208,9 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
   .hero.is-reading .canvas-orbit{transform:rotate(14deg) scale(.94);opacity:.58}
   .motion-reveal{opacity:0;transform:translateY(16px);transition:opacity .56s cubic-bezier(.2,.7,.2,1),transform .56s cubic-bezier(.2,.7,.2,1)}
   .motion-reveal.is-revealed{opacity:1;transform:none}
-  .work-project> :not(.behind-work),#creator-assistant> :not(.behind-work){transition:opacity .26s ease,filter .26s ease,transform .26s ease}
-  .work-project.is-notebook-open> :not(.behind-work),#creator-assistant.is-notebook-open> :not(.behind-work){opacity:.64;filter:saturate(.82);transform:translateX(-4px)}
-  .work-project.is-notebook-open .project-heading,#creator-assistant.is-notebook-open>.entry-header{opacity:.78}
+  .work-project> :not(.behind-work),#creator-assistant> :not(.behind-work),#imagegen-skills> :not(.behind-work){transition:opacity .26s ease,filter .26s ease,transform .26s ease}
+  .work-project.is-notebook-open> :not(.behind-work),#creator-assistant.is-notebook-open> :not(.behind-work),#imagegen-skills.is-notebook-open> :not(.behind-work){opacity:.64;filter:saturate(.82);transform:translateX(-4px)}
+  .work-project.is-notebook-open .project-heading,#creator-assistant.is-notebook-open>.entry-header,#imagegen-skills.is-notebook-open>.entry-header{opacity:.78}
 }
 @media(max-width:640px){
   .hero.is-reading .focus-primary,.hero.is-reading .focus-secondary,.hero.is-reading .focus-tertiary{transform:none;opacity:1}
@@ -228,3 +228,21 @@ nav.with-indicator{position:relative}nav.with-indicator::before{content:"";posit
 .demo-links .icon{width:16px;height:16px;flex-basis:16px}
 @media(max-width:640px){.project-demo{margin-top:22px}.project-demo video{border-radius:8px}.demo-links{gap:4px 18px}.project-demo .demo-meta{font-size:10px}}
 @media print{.project-demo{display:none}}
+
+#imagegen-skills{padding:28px 0 30px;margin-bottom:10px;border-bottom:1px solid #dce3d8}
+#imagegen-skills>.entry-header{display:block}
+#imagegen-skills .project-label{display:inline-block;margin-top:7px;color:#6e806b}
+.project-showcase{margin:22px 0}
+.project-showcase h4{font-size:15px;font-weight:600;margin:0 0 5px}
+.showcase-caption{font-size:12px;line-height:1.7;color:var(--muted);max-width:680px;margin:0 0 15px}
+.showcase-grid{display:grid;gap:18px}
+.showcase-grid figure{margin:0;min-width:0}
+.showcase-image{display:block;border-radius:10px;overflow:hidden;background:#f5f2e9}
+.showcase-image img{display:block;width:100%;height:auto}
+.showcase-grid figcaption{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 15px;padding:8px 0;font-size:12px}
+.showcase-grid figcaption span{color:var(--muted);font-size:11px}
+.showcase-grid figcaption a{text-decoration:underline;text-underline-offset:3px}
+.project-showcase .demo-links{margin-top:7px}
+@media(prefers-reduced-motion:no-preference){.showcase-image img{transition:transform .25s ease}.showcase-image:hover img{transform:scale(1.015)}}
+@media(max-width:640px){#imagegen-skills{padding:24px 0}.showcase-grid{gap:12px}.showcase-image{border-radius:6px}}
+@media print{.project-showcase{display:none}}
